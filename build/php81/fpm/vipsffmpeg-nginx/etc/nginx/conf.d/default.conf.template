@@ -1,0 +1,73 @@
+map $status $static_cache_control_header {
+    404     "no-cache, no-store, must-revalidate";
+    default "${NGINX_STATIC_CACHE_CONTROL_HEADER}";
+}
+
+server {
+    listen ${NGINX_PORT} default_server;
+    root ${NGINX_ROOT};
+
+    sendfile off;
+    client_body_buffer_size ${NGINX_CLIENT_BODY_BUFFER_SIZE};
+    client_max_body_size    ${NGINX_CLIENT_MAX_BODY_SIZE};
+    large_client_header_buffers 4 ${NGINX_LARGE_CLIENT_HEADER_BUFFERS_SIZE};
+
+    set $cors_static '';
+    if ($http_origin ~ '${NGINX_STATIC_ALLOWED_ORIGINS_REGEX}') {
+        set $cors_static 'true';
+    }
+
+    #App paths
+    location / {
+        try_files $uri /index.php$is_args$args;
+    }
+
+    location ~ ${NGINX_PHP_LOCATION_REGEX} {
+        fastcgi_pass unix:/var/run/php/php-fpm.sock;
+
+        include fastcgi_params;
+        # Set buffer size for fastcgi upstream
+        fastcgi_buffers 8 ${NGINX_PHP_FASTCGI_BUFFER_SIZE};
+        fastcgi_buffer_size ${NGINX_PHP_FASTCGI_BUFFER_SIZE};
+
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+        fastcgi_param SERVER_NAME $host;
+        fastcgi_connect_timeout ${NGINX_FASTCGI_CONNECT_TIMEOUT};
+        fastcgi_read_timeout ${NGINX_FASTCGI_READ_TIMEOUT};
+        fastcgi_send_timeout ${NGINX_FASTCGI_SEND_TIMEOUT};
+
+        # Mitigate https://httpoxy.org/ vulnerabilities
+        fastcgi_param HTTP_PROXY "";
+
+        # Custom nginx response headers
+        fastcgi_hide_header X-Robots-Tag;
+        add_header 'X-Robots-Tag' '${NGINX_PHP_X_ROBOTS_TAG}' always;
+        add_header 'Strict-Transport-Security' '${NGINX_PHP_STRICT_TRANSPORT_SECURITY}' always;
+        add_header 'X-XSS-Protection' '${NGINX_X_XSS_PROTECTION}' always;
+        add_header 'X-Content-Type-Options' '${NGINX_X_CONTENT_TYPE_OPTIONS}' always;
+    }
+
+    location ~* ${NGINX_STATIC_LOCATION_REGEX} {
+        # Custom nginx response headers
+        add_header 'Host' '$host';
+        add_header 'Cache-Control' '$static_cache_control_header' always;
+        add_header 'X-Robots-Tag' '${NGINX_STATIC_X_ROBOTS_TAG}' always;
+        add_header 'X-XSS-Protection' '${NGINX_X_XSS_PROTECTION}' always;
+        add_header 'X-Content-Type-Options' '${NGINX_X_CONTENT_TYPE_OPTIONS}' always;
+
+        if ($cors_static = 'true') {
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            # Custom nginx response headers - needs to be repeated, because if is evil
+            add_header 'Host' '$host';
+            add_header 'Cache-Control' '$static_cache_control_header' always;
+            add_header 'X-Robots-Tag' '${NGINX_STATIC_X_ROBOTS_TAG}' always;
+            add_header 'X-XSS-Protection' '${NGINX_X_XSS_PROTECTION}' always;
+            add_header 'X-Content-Type-Options' '${NGINX_X_CONTENT_TYPE_OPTIONS}' always;
+        }
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}

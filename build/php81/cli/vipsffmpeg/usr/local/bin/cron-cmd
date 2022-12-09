@@ -1,0 +1,276 @@
+#!/bin/bash
+# Cron script wrapper to run command with multiple options
+set -euo pipefail
+
+CRON_LOG_LEVEL="${CRON_LOG_LEVEL:-warn}"
+CRON_LOG_DIR="${CRON_LOG_DIR:-/var/www/html/var/log}"
+
+ARGS=$*
+COMMAND_NAME=""
+MAIN_CRON_LOG_FILE="/var/log/cron/cron.log"
+FIRST_RUN=true
+LOCK_FILE_ENABLED=false
+LOCK_FILE_PREFIX="/tmp/cron_lock_"
+LOCK_FILE_SUFFIX=""
+LOCK_FILE=""
+LOGROTATE_CONFIG_DIR="/home/user/logrotate"
+LOGROTATE_SUFFIX=""
+RUN_ENV=""
+RUNTIME=0
+SLEEP=0
+TIME_INTERVAL=0
+TIMES_IN_MINUTE=1
+
+function _debug() {
+    if [[ ${CRON_LOG_LEVEL} =~ ^debug$ ]]; then
+        echo "[$(date +"%Y-%m-%d %H:%M:%S")] [DEBUG] $*"
+    fi
+}
+
+function _info() {
+    if [[ ${CRON_LOG_LEVEL} =~ ^debug|info$ ]]; then
+        echo "[$(date +"%Y-%m-%d %H:%M:%S")] [INFO] $*"
+    fi
+}
+
+function _warn() {
+    if [[ ${CRON_LOG_LEVEL} =~ ^debug|info|warn$ ]]; then
+        echo "[$(date +"%Y-%m-%d %H:%M:%S")] [WARN] $*"
+    fi
+}
+
+function _error() {
+    if [[ ${CRON_LOG_LEVEL} =~ ^debug|info|warn|error$ ]]; then
+        echo "[$(date +"%Y-%m-%d %H:%M:%S")] [ERROR] $*" >&2
+    fi
+}
+
+function _set() {
+    if [[ ${CRON_LOG_LEVEL} =~ ^debug$ ]]; then
+        set -x
+    fi
+}
+
+function _unset() {
+    set +x
+}
+
+function help() {
+    echo -en "$(printf %q "${BASH_SOURCE[0]}") [OPTIONS]... [COMMAND]
+    \nCron script wrapper to run command with multiple options.
+
+    Options:
+        -h, --help              Display this help and exit
+        -l, --lock              (Optional) Whether to enable flock locking on the command
+        -ls, --logrotate-suffix (Optional) Logrotate file suffix for the command.
+                                Use when running the same command with different arguments.
+        -lfs, --lockfile-suffix (Optional) Lock file suffix for the command.
+                                Use when running the same command with different arguments.
+                                Only applicable when -l or --lock option is set.
+        -n, --name              (Required) The name alias of the command to run.
+        -re, --run-env          Run the command only on selected cron environment.
+        -s, --sleep             (Optional) Sleep in seconds before running the operation.
+                                Only values between 1 to 59 are allowed.
+                                Use '-s 30' or '--sleep=30' to delay command for 30 seconds.
+        -ti, --time-interval    (Optional) Time interval in seconds to run the operation.
+                                Only values between 1 to 30 are allowed.
+                                Use '-ti 10' or '--time-interval=10' to run command every 10 seconds.
+    \n"
+}
+
+function execute() {
+    time_count=0
+    command="$*"
+
+    # Rotate the logfile if it is needed and the logfile exists
+    if [ -f "${CRON_LOG_FILE}" ]; then
+        logrotate -s "${LOGROTATE_CONFIG_DIR}/${COMMAND_NAME}${LOGROTATE_SUFFIX}_status" "${LOGROTATE_CONFIG_DIR}/${COMMAND_NAME}${LOGROTATE_SUFFIX}" >>"${CRON_LOG_FILE}" 2>&1
+    fi
+
+    while [ $time_count -lt ${TIMES_IN_MINUTE} ]; do
+        if ! ${FIRST_RUN} && [ "${TIME_INTERVAL}" -gt "${RUNTIME}" ]; then
+            sleep $(("${TIME_INTERVAL}" - "${RUNTIME}"))
+        fi
+
+        {
+            _info "-------------------------------------------------------------------------"
+            START_STAMP=$(date +"%s")
+
+            _info "Starting cron task \"${COMMAND_NAME}\""
+
+            cd /var/www/html || exit 1
+            if [ -n "${LOCK_FILE}" ]; then
+                _set
+                flock -w 50 -E 99 "${LOCK_FILE}" bash -c "$command" || true
+                command_exit_code="$?"
+                _unset
+                if [ "$command_exit_code" -eq 99 ]; then
+                    _warn "The cron task \"${COMMAND_NAME}\" is already running!"
+                    _debug "Lock file: \"${LOCK_FILE}\""
+                elif [ "$command_exit_code" -ne 0 ]; then
+                    _error "The cron task \"${COMMAND_NAME}\" failed. Error code: \"$command_exit_code\"."
+                fi
+            else
+                _set
+                bash -c "$command" || true
+                _unset
+            fi
+
+            END_STAMP=$(date +"%s")
+            RUNTIME=$((END_STAMP - START_STAMP))
+
+            _info "Finished cron task \"${COMMAND_NAME}\". Duration: $(date -d@${RUNTIME} -u '+%Hh %Mm %Ss')"
+            _info ""
+        } >>"${CRON_LOG_FILE}" 2>&1
+
+        ((time_count++))
+        FIRST_RUN=false
+    done
+}
+
+(
+    if [ $# -eq 0 ]; then
+        echo "[ERROR] No arguments provided" >&2
+        help
+        exit 1
+    fi
+    # Go through all command line arguments and setup variables accordingly
+    for arg in $ARGS; do
+        case $arg in
+        -l | --lock)
+            LOCK_FILE_ENABLED=true
+            shift 1
+            continue
+            ;;
+        -ls | --logrotate-suffix)
+            LOGROTATE_SUFFIX="_$2"
+            shift 2
+            continue
+            ;;
+        -ls=* | --logrotate-suffix=*)
+            LOGROTATE_SUFFIX="_${1#*=}"
+            shift 1
+            continue
+            ;;
+        -lfs | --lockfile-suffix)
+            LOCK_FILE_SUFFIX="_$2"
+            shift 2
+            continue
+            ;;
+        -lfs=* | --lockfile-suffix=*)
+            LOCK_FILE_SUFFIX="_${1#*=}"
+            shift 1
+            continue
+            ;;
+        -n | --name)
+            COMMAND_NAME=$2
+            shift 2
+            continue
+            ;;
+        -n=* | --name=*)
+            COMMAND_NAME="${1#*=}"
+            shift 1
+            continue
+            ;;
+        -re | --run-env)
+            RUN_ENV=$2
+            shift 2
+            continue
+            ;;
+        -re=* | --run-env=*)
+            RUN_ENV="${1#*=}"
+            shift 1
+            continue
+            ;;
+        -s | --sleep)
+            SLEEP=$2
+            if [ -z "${SLEEP}" ] || [[ ! ${SLEEP} =~ ^[0-9]+$ ]] || [ "${SLEEP}" -lt 1 ] || [ "${SLEEP}" -gt 59 ]; then
+                _error "Invalid number for sleep switch. Sleep have to be defined from 1 to 59."
+                help
+                exit 1
+            fi
+            shift 2
+            continue
+            ;;
+        -s=* | --sleep=*)
+            SLEEP="${1#*=}"
+            if [ -z "${SLEEP}" ] || [[ ! ${SLEEP} =~ ^[0-9]+$ ]] || [ "${SLEEP}" -lt 1 ] || [ "${SLEEP}" -gt 59 ]; then
+                _error "Invalid number for sleep switch. Sleep have to be defined from 1 to 59."
+                help
+                exit 1
+            fi
+            shift 1
+            continue
+            ;;
+        -ti | --time-interval)
+            TIME_INTERVAL=$2
+            if [ -z "${TIME_INTERVAL}" ] || [[ ! ${TIME_INTERVAL} =~ ^[0-9]+$ ]] || [ "${TIME_INTERVAL}" -lt 1 ] || [ "${TIME_INTERVAL}" -gt 30 ]; then
+                _error "Invalid number for time interval switch. Time interval have to be defined from 1 to 30."
+                help
+                exit 1
+            fi
+            shift 2
+            continue
+            ;;
+        -ti=* | --time-interval=*)
+            TIME_INTERVAL="${1#*=}"
+            if [ -z "${TIME_INTERVAL}" ] || [[ ! ${TIME_INTERVAL} =~ ^[0-9]+$ ]] || [ "${TIME_INTERVAL}" -lt 1 ] || [ "${TIME_INTERVAL}" -gt 30 ]; then
+                _error "Invalid number for time interval switch. Time interval have to be defined from 1 to 30."
+                help
+                exit 1
+            fi
+            shift 1
+            continue
+            ;;
+        -h | --help)
+            help
+            exit
+            ;;
+        *)
+            continue
+            ;;
+        esac
+    done
+
+    if [ -z "${COMMAND_NAME}" ]; then
+        _error "Missing -n, --name option for command."
+        help
+        exit 1
+    fi
+
+    # Run the command only on selected environment
+    if [ -n "${RUN_ENV}" ] && [[ ! ${RUN_ENV} =~ ${DEPLOY_ENV} ]]; then
+        exit
+    fi
+
+    # Sleep the command if needed
+    if [ "${SLEEP}" -gt 0 ]; then
+        sleep "${SLEEP}"
+    fi
+    # Setup time interval if needed
+    if [ "${TIME_INTERVAL}" -gt 0 ]; then
+        TIMES_IN_MINUTE=$(((60 - SLEEP) / TIME_INTERVAL))
+    fi
+
+    if ${LOCK_FILE_ENABLED}; then
+        LOCK_FILE=${LOCK_FILE_PREFIX}${COMMAND_NAME}${LOCK_FILE_SUFFIX}
+    fi
+    CRON_LOG_FILE=${CRON_LOG_DIR}/${COMMAND_NAME}.log
+
+    # Create or update logrotate config
+    mkdir -p ${LOGROTATE_CONFIG_DIR}
+    cat <<EOF >"${LOGROTATE_CONFIG_DIR}/${COMMAND_NAME}${LOGROTATE_SUFFIX}"
+"${CRON_LOG_FILE}" {
+    size 10M
+    maxage 1
+    rotate 1
+    copytruncate
+    compress
+    notifempty
+    missingok
+}
+EOF
+
+    execute "$*"
+
+) 2>&1 | tee -a "${MAIN_CRON_LOG_FILE}"

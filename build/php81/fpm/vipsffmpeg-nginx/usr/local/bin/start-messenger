@@ -1,0 +1,95 @@
+#!/bin/bash
+# Script used to start messenger inside the container
+# Inspiration taken from: https://medium.com/debricked/scaling-symfony-consumers-using-kubernetes-bcc92641ac26
+set -euo pipefail
+
+SUPERVISOR_PROGRAM_NAME=${SUPERVISOR_PROGRAM_NAME:-default}
+SUPERVISOR_PROCESS_NUM=${SUPERVISOR_PROCESS_NUM:-0}
+MESSENGER_STOP_FILE="/tmp/stop_${SUPERVISOR_PROGRAM_NAME}"
+MESSENGER_NAME=""
+TIME_LIMIT=3600
+LIMIT=1000
+VERBOSITY=""
+
+cd /var/www/html || exit 1
+
+function help() {
+    echo -en "$(printf %q "${BASH_SOURCE[0]}") [OPERATION] [OPTIONS]
+    \nScript used to start messenger inside the container.
+
+    Options:
+        -h, --help    Display this help and exit
+        --name        Name of the messenger to start
+        --limit       Limit of messages to consume before the messenger stops (default: 1000)
+        --time-limit  Stop the messenger after this time limit (default: 3600)
+
+    Examples:
+        $(printf %q "${BASH_SOURCE[0]}") --name messenger
+        $(printf %q "${BASH_SOURCE[0]}") --name=messenger -v
+    \n"
+}
+
+while [ "$#" -gt 0 ]; do
+    case $1 in
+    --name)
+        MESSENGER_NAME=$2
+        shift 2
+        continue
+        ;;
+    --name=*)
+        MESSENGER_NAME=${1#*=}
+        shift 1
+        continue
+        ;;
+    --limit)
+        LIMIT=$2
+        shift 2
+        continue
+        ;;
+    --limit=*)
+        LIMIT=${1#*=}
+        shift 1
+        continue
+        ;;
+    --time-limit)
+        TIME_LIMIT=$2
+        shift 2
+        continue
+        ;;
+    --time-limit=*)
+        TIME_LIMIT=${1#*=}
+        shift 1
+        continue
+        ;;
+    -v*)
+        VERBOSITY=$1
+        shift 1
+        continue
+        ;;
+    -h | --help)
+        help
+        exit
+        ;;
+    *)
+        echo "[WARN] Unknown command line switch: $1"
+        help
+        exit 1
+        ;;
+    esac
+done
+
+if [ -z "${MESSENGER_NAME}" ]; then
+    echo "[ERROR] Missing --name option for command."
+    help
+    exit 1
+fi
+
+if [[ "${APP_READ_ONLY_MODE:-0}" -eq 1 || (-n "${SUPERVISOR_PROGRAM_NAME}" && -f "${MESSENGER_STOP_FILE}") ]]; then
+    echo "[INFO] Requested ${MESSENGER_NAME} worker stop, removing stop file and exiting with value 37"
+    rm -f "${MESSENGER_STOP_FILE}"
+    exit 37
+else
+    echo "[INFO] Starting ${MESSENGER_NAME} worker"
+    # shellcheck disable=SC2086
+    bin/console messenger:consume "${MESSENGER_NAME}" --limit "${LIMIT}" --time-limit "${TIME_LIMIT}" ${VERBOSITY}
+fi

@@ -1,0 +1,344 @@
+#
+# NOTE:
+# THIS DOCKERFILE IS GENERATED VIA "update.sh".
+# PLEASE DO NOT EDIT IT DIRECTLY!
+# CHECK README FOR MORE INFO.
+#
+FROM php:8.1.13-fpm
+
+LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
+
+# ----------------------------------------------------------------------------------------------------------------------
+# COMMON ENVIRONMENT VARIABLES
+# ----------------------------------------------------------------------------------------------------------------------
+# Php
+# Php error reporting constants https://www.php.net/manual/en/errorfunc.constants.php
+# Calculate the number for config on https://maximivanov.github.io/php-error-reporting-calculator/
+# error_reporting = "E_ALL & ~E_STRICT & ~E_DEPRECATED & ~E_USER_DEPRECATED" => 6143
+ENV PHP_DATE_TIMEZONE="UTC" \
+    PHP_ACCESS_LOG_FORMAT="%R - %u %t \"%m %r\" %s path:%{REQUEST_URI}e pid:%p took:%ds mem:%{mega}Mmb cpu:%C%% status:%s {%{REMOTE_ADDR}e|%{HTTP_USER_AGENT}e}" \
+    PHP_ACCESS_LOG="/proc/self/fd/2" \
+    PHP_DISPLAY_ERRORS=0 \
+    PHP_DISPLAY_STARTUP_ERRORS=0 \
+    PHP_ERROR_LOG="/proc/self/fd/2" \
+    PHP_ERROR_REPORTING=6143 \
+    PHP_EXPOSE_PHP=0 \
+    PHP_LOG_LEVEL="notice" \
+    PHP_MAX_EXECUTION_TIME=30 \
+    PHP_MEMORY_LIMIT="256M" \
+    PHP_OPCACHE_CLI_ENABLE=0 \
+    PHP_OPCACHE_ENABLE=1 \
+    PHP_OPCACHE_ERROR_LOG="/proc/self/fd/2" \
+    PHP_OPCACHE_INTERNED_STRINGS_BUFFER=32 \
+    PHP_OPCACHE_LOG_VERBOSITY_LEVEL=1 \
+    PHP_OPCACHE_MAX_ACCELERATED_FILES=32531 \
+    PHP_OPCACHE_MEMORY_CONSUMPTION=256 \
+    PHP_OPCACHE_PRELOAD_PATH="" \
+    PHP_OPCACHE_VALIDATE_TIMESTAMPS=0 \
+    PHP_POST_MAX_SIZE="0M"\
+    PHP_SESSION_COOKIE_SAMESITE="" \
+    PHP_SESSION_COOKIE_SECURE="" \
+    PHP_SESSION_SAVE_HANDLER="files" \
+    PHP_SESSION_SAVE_PATH="/tmp" \
+    PHP_SLOW_LOG="/proc/self/fd/2" \
+    PHP_UPLOAD_MAX_FILESIZE="20M" \
+    PHP_VARIABLES_ORDER="GPCS" \
+    XDEBUG_LOG="/var/www/html/xdebug.log"
+# Composer
+ENV COMPOSER_HOME="/composer" \
+    PATH="/composer/vendor/bin:$PATH"
+# Packages
+ENV BUILD_DEPS="build-essential \
+                libicu-dev \
+                libjpeg-dev \
+                libxml2-dev \
+                libzip-dev"
+ENV PECL_BUILD_DEPS="libcurl4-openssl-dev \
+                     libssl-dev"
+ENV RUN_DEPS="ca-certificates \
+              cron \
+              curl \
+              g++ \
+              gcc \
+              gettext-base \
+              git \
+              gnupg \
+              less \
+              libpng-dev \
+              libjpeg62-turbo \
+              libzip4 \
+              logrotate \
+              lsb-release \
+              lsof \
+              lz4 \
+              make \
+              nano \
+              openssh-client \
+              procps \
+              screen \
+              unzip \
+              vim \
+              wget \
+              zip"
+
+# ----------------------------------------------------------------------------------------------------------------------
+# PHP
+# Initialization with PHP installation
+# ----------------------------------------------------------------------------------------------------------------------
+RUN apt-get update && \
+    apt-get install -y \
+        ${BUILD_DEPS} \
+        ${PECL_BUILD_DEPS} \
+        ${RUN_DEPS} \
+        supervisor=4.2.2-2 && \
+    docker-php-ext-configure opcache && \
+    docker-php-ext-configure pdo_mysql && \
+    docker-php-ext-configure zip && \
+    docker-php-ext-install -j$(nproc) \
+        opcache \
+        pdo_mysql \
+        zip && \
+    apt-get purge \
+        -y --auto-remove \
+        -o APT::AutoRemove::RecommendsImportant=false \
+        ${BUILD_DEPS} \
+        ${PECL_BUILD_DEPS} && \
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/* && \
+    rm -f /usr/local/etc/php-fpm.d/docker.conf && \
+    rm -f /usr/local/etc/php-fpm.d/zz-docker.conf
+
+# ----------------------------------------------------------------------------------------------------------------------
+# PECL PACKAGES
+# ----------------------------------------------------------------------------------------------------------------------
+RUN apt-get update && \
+    apt-get install -y \
+        ${PECL_BUILD_DEPS} && \
+    yes '' | pecl install mongodb-1.15.0 && \
+    yes '' | pecl install pcov-1.0.11 && \
+    yes '' | pecl install redis-5.3.7 && \
+    yes '' | pecl install xdebug-3.1.6 && \
+    docker-php-ext-enable \
+        mongodb \
+        pcov \
+        redis \
+        xdebug && \
+    pecl clear-cache && \
+    rm -rf /tmp/pear && \
+    apt-get purge \
+        -y --auto-remove \
+        -o APT::AutoRemove::RecommendsImportant=false \
+        ${PECL_BUILD_DEPS} && \
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/*
+# ----------------------------------------------------------------------------------------------------------------------
+# PHP SECURITY CHECKER
+# ----------------------------------------------------------------------------------------------------------------------
+# Php Security Checker binary package setup
+RUN wget -q \
+        https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.6/local-php-security-checker_2.0.6_linux_amd64 \
+        -O /usr/local/bin/local-php-security-checker && \
+    chmod +x /usr/local/bin/local-php-security-checker
+
+# ----------------------------------------------------------------------------------------------------------------------
+# COMPOSER
+# ----------------------------------------------------------------------------------------------------------------------
+RUN curl -sS https://getcomposer.org/installer | \
+    php -- \
+        --install-dir=/usr/local/bin \
+        --filename=composer \
+        --version=2.4.4
+
+# ----------------------------------------------------------------------------------------------------------------------
+# REDIS-CLI
+# ----------------------------------------------------------------------------------------------------------------------
+RUN wget https://download.redis.io/releases/redis-6.2.7.tar.gz && \
+    tar xvzf redis-6.2.7.tar.gz && \
+    rm -f redis-6.2.7.tar.gz && \
+    cd redis-6.2.7/deps && \
+    make && \
+    cd .. && \
+    make && \
+    cp src/redis-cli /usr/bin/ && \
+    cd .. && \
+    rm -rf redis-6.2.7
+
+##<autogenerated>##
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# VIPS SETUP START
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ----------------------------------------------------------------------------------------------------------------------
+# VIPS ENVIRONMENT VARIABLES
+# Packages
+ENV VIPS_BUILD_DEPS="automake \
+                    build-essential \
+                    libexpat1-dev \
+                    libfreetype6-dev \
+                    libglib2.0-dev \
+                    libgsf-1-dev \
+                    libjpeg-dev \
+                    libjpeg62-turbo-dev \
+                    libmagickwand-dev \
+                    libmatio-dev \
+                    libtiff5-dev \
+                    libxml2-dev \
+                    pkg-config"
+ENV VIPS_RUN_DEPS="fftw3-dev \
+                  gobject-introspection \
+                  gtk-doc-tools \
+                  imagemagick \
+                  jpegoptim \
+                  libcfitsio-dev \
+                  libcurl4-openssl-dev \
+                  libexif-dev \
+                  libgif-dev \
+                  libgsf-1-114 \
+                  libjpeg62-turbo \
+                  libmatio11 \
+                  liborc-0.4-dev \
+                  libopenexr25 \
+                  libopenslide-dev \
+                  libpango1.0-dev \
+                  libpoppler-glib8 \
+                  librsvg2-dev \
+                  libturbojpeg0-dev \
+                  libwebp-dev"
+
+# ----------------------------------------------------------------------------------------------------------------------
+# VIPS
+# Dependency installation
+RUN apt-get update && \
+    apt-get install -y \
+        ${VIPS_BUILD_DEPS} \
+        ${VIPS_RUN_DEPS} && \
+    cd /tmp && \
+    wget -q \
+        https://github.com/libvips/libvips/releases/download/v8.13.3/vips-8.13.3.tar.gz \
+        -O vips.tar.gz && \
+    tar xvzf vips.tar.gz && \
+    cd vips-8.13.3 && \
+    ./configure && \
+    make && \
+    make install && \
+    cd .. && \
+    rm -rf vips* && \
+# Pecl Vips installation
+    yes '' | pecl install vips-1.0.13 && \
+    docker-php-ext-enable vips && \
+# Cleanup
+    pecl clear-cache && \
+    apt-get purge \
+        -y --auto-remove \
+        -o APT::AutoRemove::RecommendsImportant=false \
+        ${VIPS_BUILD_DEPS} && \
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/*
+
+# ----------------------------------------------------------------------------------------------------------------------
+# FFMPEG
+# Package installation
+RUN apt-get update && \
+    apt-get install -y \
+        ffmpeg=7:4.3.4-0+deb11u1 \
+        libavcodec58=7:4.3.4-0+deb11u1 \
+        libavdevice58=7:4.3.4-0+deb11u1 \
+        libavfilter7=7:4.3.4-0+deb11u1 \
+        libavformat58=7:4.3.4-0+deb11u1 \
+        libavresample4=7:4.3.4-0+deb11u1 \
+        libavutil56=7:4.3.4-0+deb11u1 \
+        libpostproc55=7:4.3.4-0+deb11u1 \
+        libswresample3=7:4.3.4-0+deb11u1 \
+        libswscale5=7:4.3.4-0+deb11u1 && \
+# Cleanup
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/*
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# VIPS SETUP END
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# NGINX SETUP START
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ----------------------------------------------------------------------------------------------------------------------
+# NGINX ENVIRONMENT VARIABLES
+ENV NGINX_ACCESS_CONTROL_ALLOW_HEADERS="Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-App-Version" \
+    NGINX_ACCESS_LOG="/var/log/nginx/access.log main" \
+    NGINX_ALLOWED_ORIGINS_REGEX="^https?://.*" \
+    NGINX_CLIENT_BODY_BUFFER_SIZE=16k \
+    NGINX_CLIENT_MAX_BODY_SIZE=1m \
+    NGINX_CORS_CONFIG=true \
+    NGINX_ERROR_LOG="/var/log/nginx/error.log warn" \
+    NGINX_FASTCGI_CONNECT_TIMEOUT="60s" \
+    NGINX_FASTCGI_READ_TIMEOUT="60s" \
+    NGINX_FASTCGI_SEND_TIMEOUT="60s" \
+    NGINX_KEEPALIVE_REQUESTS=10000 \
+    NGINX_KEEPALIVE_TIMEOUT=650 \
+    NGINX_LARGE_CLIENT_HEADER_BUFFERS_SIZE=16k \
+    NGINX_PHP_ACCESS_CONTROL_MAX_AGE=1728000 \
+    NGINX_PHP_FASTCGI_BUFFER_SIZE=32K \
+    NGINX_PHP_LOCATION_REGEX="^/.+\.php(/|$)" \
+    NGINX_PHP_STRICT_TRANSPORT_SECURITY="max-age=31536000" \
+    NGINX_PHP_X_ROBOTS_TAG="noindex, nofollow, noarchive, nosnippet" \
+    NGINX_PORT=8080 \
+    NGINX_ROOT=/var/www/html/public \
+    NGINX_SERVER_TOKENS="off" \
+    NGINX_STATIC_ALLOWED_ORIGINS_REGEX="^https?://.*" \
+    NGINX_STATIC_CACHE_CONTROL_HEADER="public, max-age=31557600, s-maxage=31557600" \
+    NGINX_STATIC_LOCATION_REGEX="\.(gif|ico|css|js|svg|png|jpg|jpeg|bmp|eot|webp|woff|woff2|ttf|otf)$" \
+    NGINX_STATIC_X_ROBOTS_TAG="noindex, nofollow, noarchive, nosnippet" \
+    NGINX_WORKER_CONNECTIONS=1024 \
+    NGINX_WORKER_PROCESSES=1 \
+    NGINX_WORKER_RLIMIT_NOFILE=65535 \
+    NGINX_X_CONTENT_TYPE_OPTIONS="nosniff" \
+    NGINX_X_XSS_PROTECTION="1; mode=block"
+
+# ----------------------------------------------------------------------------------------------------------------------
+# NGINX
+# Inspiration taken from the official Nginx Dockerfile
+RUN NGINX_GPGKEY=573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62; \
+    found=''; \
+    for server in \
+        ha.pool.sks-keyservers.net \
+        hkp://keyserver.ubuntu.com:80 \
+        hkp://p80.pool.sks-keyservers.net:80 \
+        pgp.mit.edu; \
+    do \
+        echo "Fetching GPG key $NGINX_GPGKEY from $server"; \
+        apt-key adv --keyserver "$server" --keyserver-options timeout=10 --recv-keys "$NGINX_GPGKEY" && found=yes && break; \
+    done; \
+    test -z "$found" && echo >&2 "error: failed to fetch GPG key $NGINX_GPGKEY" && exit 1; \
+    echo "deb http://nginx.org/packages/debian $(lsb_release -cs) nginx" \
+        | tee /etc/apt/sources.list.d/nginx.list && \
+    apt-get update && \
+    apt-get install --no-install-recommends --no-install-suggests -y \
+        nginx=1.22.1-1~bullseye \
+        nginx-module-xslt=1.22.1-1~bullseye \
+        nginx-module-geoip=1.22.1-1~bullseye \
+        nginx-module-image-filter=1.22.1-1~bullseye \
+        nginx-module-njs=1.22.1+0.7.9-1~bullseye && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# ----------------------------------------------------------------------------------------------------------------------
+# NGINX LOGGING AND USER SETUP
+# Create PID folders and forward nginx logs to docker log collector
+RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
+    ln -sf /dev/stderr /var/log/nginx/error.log
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# NGINX SETUP END
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##</autogenerated>##
+
+# ----------------------------------------------------------------------------------------------------------------------
+# RUN CONFIGURATION
+# ----------------------------------------------------------------------------------------------------------------------
+COPY ./etc /etc
+COPY ./usr /usr
+
+# ----------------------------------------------------------------------------------------------------------------------
+# RUN
+# Run setup and entrypoint start
+# ----------------------------------------------------------------------------------------------------------------------
+WORKDIR /var/www/html
+
+ENTRYPOINT ["docker-entrypoint"]

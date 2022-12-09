@@ -1,0 +1,15 @@
+# Docker
+# Build and push php images to Docker Hub
+name: ci
+
+on:
+  push:
+    paths:
+      - 'build/**'
+      - '.github/**'
+    branches:
+      - 'main'
+    tags:
+      - '*'
+
+jobs:

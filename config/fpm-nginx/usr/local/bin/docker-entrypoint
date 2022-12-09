@@ -1,0 +1,71 @@
+#!/bin/bash
+
+NGINX_CONF_TEMPLATE="/etc/nginx/nginx.conf.template"
+NGINX_CONF="/etc/nginx/nginx.conf"
+NGINX_DEFAULT_CONF_TEMPLATE="/etc/nginx/conf.d/default.conf.template"
+NGINX_CORS_CONF_TEMPLATE="/etc/nginx/conf.d/cors.conf.template"
+NGINX_DEFAULT_CONF="/etc/nginx/conf.d/default.conf"
+
+if [ -f ${NGINX_CONF_TEMPLATE} ]; then
+    echo "[INFO] Setup nginx \"${NGINX_CONF}\" config file"
+    envsubst "\
+        \${NGINX_ACCESS_LOG} \
+        \${NGINX_ERROR_LOG} \
+        \${NGINX_KEEPALIVE_REQUESTS} \
+        \${NGINX_KEEPALIVE_TIMEOUT} \
+        \${NGINX_SERVER_TOKENS} \
+        \${NGINX_WORKER_CONNECTIONS} \
+        \${NGINX_WORKER_PROCESSES} \
+        \${NGINX_WORKER_RLIMIT_NOFILE} \
+    " <${NGINX_CONF_TEMPLATE} >${NGINX_CONF}
+fi
+if ${NGINX_CORS_CONFIG} && [ -f "${NGINX_CORS_CONF_TEMPLATE}" ]; then
+    echo "[INFO] Setup nginx cors \"${NGINX_DEFAULT_CONF}\" config file"
+    envsubst "\
+        \${NGINX_ACCESS_CONTROL_ALLOW_HEADERS} \
+        \${NGINX_ALLOWED_ORIGINS_REGEX} \
+        \${NGINX_CLIENT_BODY_BUFFER_SIZE} \
+        \${NGINX_CLIENT_MAX_BODY_SIZE} \
+        \${NGINX_FASTCGI_CONNECT_TIMEOUT} \
+        \${NGINX_FASTCGI_READ_TIMEOUT} \
+        \${NGINX_FASTCGI_SEND_TIMEOUT} \
+        \${NGINX_LARGE_CLIENT_HEADER_BUFFERS_SIZE} \
+        \${NGINX_PHP_ACCESS_CONTROL_MAX_AGE} \
+        \${NGINX_PHP_FASTCGI_BUFFER_SIZE} \
+        \${NGINX_PHP_LOCATION_REGEX} \
+        \${NGINX_PHP_STRICT_TRANSPORT_SECURITY} \
+        \${NGINX_PHP_X_ROBOTS_TAG} \
+        \${NGINX_PORT} \
+        \${NGINX_ROOT} \
+        \${NGINX_STATIC_ALLOWED_ORIGINS_REGEX} \
+        \${NGINX_STATIC_CACHE_CONTROL_HEADER} \
+        \${NGINX_STATIC_LOCATION_REGEX} \
+        \${NGINX_STATIC_X_ROBOTS_TAG} \
+        \${NGINX_X_CONTENT_TYPE_OPTIONS} \
+        \${NGINX_X_XSS_PROTECTION} \
+    " <${NGINX_CORS_CONF_TEMPLATE} >${NGINX_DEFAULT_CONF}
+elif [ -f "${NGINX_DEFAULT_CONF_TEMPLATE}" ]; then
+    echo "[INFO] Setup nginx default \"${NGINX_DEFAULT_CONF}\" config file"
+    envsubst "\
+        \${NGINX_CLIENT_BODY_BUFFER_SIZE} \
+        \${NGINX_CLIENT_MAX_BODY_SIZE} \
+        \${NGINX_FASTCGI_CONNECT_TIMEOUT} \
+        \${NGINX_FASTCGI_READ_TIMEOUT} \
+        \${NGINX_FASTCGI_SEND_TIMEOUT} \
+        \${NGINX_LARGE_CLIENT_HEADER_BUFFERS_SIZE} \
+        \${NGINX_PHP_FASTCGI_BUFFER_SIZE} \
+        \${NGINX_PHP_LOCATION_REGEX} \
+        \${NGINX_PHP_STRICT_TRANSPORT_SECURITY} \
+        \${NGINX_PHP_X_ROBOTS_TAG} \
+        \${NGINX_PORT} \
+        \${NGINX_ROOT} \
+        \${NGINX_STATIC_ALLOWED_ORIGINS_REGEX} \
+        \${NGINX_STATIC_CACHE_CONTROL_HEADER} \
+        \${NGINX_STATIC_LOCATION_REGEX} \
+        \${NGINX_STATIC_X_ROBOTS_TAG} \
+        \${NGINX_X_CONTENT_TYPE_OPTIONS} \
+        \${NGINX_X_XSS_PROTECTION} \
+    " <${NGINX_DEFAULT_CONF_TEMPLATE} >${NGINX_DEFAULT_CONF}
+fi
+
+exec "$@"
