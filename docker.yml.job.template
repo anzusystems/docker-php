@@ -19,7 +19,7 @@
         with:
           context: ./${BUILD_DIR}
           file: ./${BUILD_DIR}/Dockerfile
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ github.ref_name }}-${VARIANT_TAG}
+          cache-to: type=gha,scope=${{ github.ref_name }}-${VARIANT_TAG},mode=max
           push: true
           tags: anzusystems/php:${{ github.ref_name }}-${VARIANT_TAG},anzusystems/php:latest-${VARIANT_TAG}
