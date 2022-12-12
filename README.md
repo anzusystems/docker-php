@@ -1,7 +1,7 @@
 AnzuSystems PHP Development Docker Images by Petitpress.sk
 =====
 
-Main PHP docker images from which all our PHP flavors (versions with base, vipsffmpeg...) are built. It is based on [official PHP image](https://hub.docker.com/_/php) using our custom configuration.
+Main PHP docker images from which all our PHP flavors (versions with base, vipsffmpeg...) are built. It is based on [official PHP images](https://hub.docker.com/_/php) using our custom configuration.
 Additionally, it has preinstalled some libraries (xdebug, libvips, redis, mongodb...). Also contains [nginx](https://nginx.org/).
 
 -----
@@ -9,14 +9,15 @@ Additionally, it has preinstalled some libraries (xdebug, libvips, redis, mongod
 ## What's inside
 
 - PHP8.1 - 8.1.13
+- PHP8.2 - 8.2.0
 - PHP Mongodb ext - 1.15.0
 - PHP Redis ext - 5.3.7
 - PHP Pcov ext - 1.0.11
-- PHP Xdebug ext - 3.1.6
+- PHP Xdebug ext - 3.2.0
 - Redis (client) - 6.2.7
 - Supervisor - 4.2.2
-- Composer - 2.4.3
-- VIPS variant:
+- Composer - 2.4.4
+- Vipsffmpeg variant:
   - PHP Vips ext - 1.0.13
   - FFmpeg - 4.3.4
   - LibVips - 8.13.3

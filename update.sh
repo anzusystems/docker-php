@@ -13,6 +13,7 @@ TMP_FINAL_DOCKERFILE_FILE="/tmp/php_tmp_final_variant_Dockerfile"
 declare -A VERSION_LIST
 VERSION_LIST=(
     [8.1]="${PHP81_VERSION}"
+    [8.2]="${PHP82_VERSION}"
 )
 
 declare -A VARIANTS_LIST
@@ -40,10 +41,12 @@ function generated_warning() {
 mkdir -p .github/workflows
 cat docker.yml.template >.github/workflows/docker.yml
 
-for version in "${!VERSION_LIST[@]}"; do
+readarray -t VERSION_TAGS < <(printf '%s\n' "${!VERSION_LIST[@]}" | sort -V)
+for version in "${VERSION_TAGS[@]}"; do
     PHP_VERSION_TAG="php${version//./}"
     PHP_VERSION=${VERSION_LIST[$version]}
-    for i in "${!VARIANTS_LIST[@]}"; do
+    readarray -t PHP_VARIANTS < <(printf '%s\n' "${!VARIANTS_LIST[@]}" | sort)
+    for i in "${PHP_VARIANTS[@]}"; do
         export PHP_VARIANT=$i
         export PHP_SOURCE_TAG="${PHP_VERSION}-${PHP_VARIANT}"
         VARIANTS=${VARIANTS_LIST[$i]}
@@ -57,6 +60,7 @@ for version in "${!VERSION_LIST[@]}"; do
             done
             IFS=${DEFAULT_IFS}
             # Variables
+            export PHP_VERSION_TAG
             export VARIANT
             export BUILD_DIR="build/${PHP_VERSION_TAG}/${PHP_VARIANT}/${VARIANT}"
             TMP_VARIANT_TAG="${PHP_VERSION_TAG}-${PHP_VARIANT}-${VARIANT}"
@@ -132,6 +136,7 @@ for version in "${!VERSION_LIST[@]}"; do
                 \${GITHUB_JOB_ID} \
                 \${BUILD_DIR} \
                 \${PHP_VARIANT} \
+                \${PHP_VERSION_TAG} \
                 \${VARIANT} \
                 \${VARIANT_TAG} \
             " <docker.yml.job.template >>.github/workflows/docker.yml

@@ -117,7 +117,7 @@ RUN apt-get update && \
     yes '' | pecl install mongodb-1.15.0 && \
     yes '' | pecl install pcov-1.0.11 && \
     yes '' | pecl install redis-5.3.7 && \
-    yes '' | pecl install xdebug-3.1.6 && \
+    yes '' | pecl install xdebug-3.2.0 && \
     docker-php-ext-enable \
         mongodb \
         pcov \

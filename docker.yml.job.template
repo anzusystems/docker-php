@@ -1,5 +1,5 @@
   ${GITHUB_JOB_ID}:
-    name: Build and push ${PHP_VARIANT} ${VARIANT} image
+    name: Build and push ${PHP_VERSION_TAG} ${PHP_VARIANT} ${VARIANT} image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,3 +23,4 @@
           cache-to: type=gha,scope=${{ github.ref_name }}-${VARIANT_TAG},mode=max
           push: true
           tags: anzusystems/php:${{ github.ref_name }}-${VARIANT_TAG},anzusystems/php:latest-${VARIANT_TAG}
+
