@@ -1,4 +1,4 @@
-AnzuSystems PHP Development Docker Images by Petitpress.sk
+AnzuSystems PHP Development Docker Images by Petit Press a.s. (www.sme.sk)
 =====
 
 Main PHP docker images from which all our PHP flavors (versions with base, vipsffmpeg...) are built. It is based on [official PHP images](https://hub.docker.com/_/php) using our custom configuration.
