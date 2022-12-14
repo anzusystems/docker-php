@@ -34,8 +34,8 @@ jobs:
         with:
           context: ./build/php81/cli/base
           file: ./build/php81/cli/base/Dockerfile
-          cache-from: type=gha,scope=${{ github.ref_name }}-php81-cli
-          cache-to: type=gha,scope=${{ github.ref_name }}-php81-cli,mode=max
+          cache-from: type=gha,scope=php81-cli
+          cache-to: type=gha,scope=php81-cli,mode=max
           push: true
           tags: anzusystems/php:${{ github.ref_name }}-php81-cli,anzusystems/php:latest-php81-cli
 
@@ -60,8 +60,8 @@ jobs:
         with:
           context: ./build/php81/cli/vipsffmpeg
           file: ./build/php81/cli/vipsffmpeg/Dockerfile
-          cache-from: type=gha,scope=${{ github.ref_name }}-php81-cli-vipsffmpeg
-          cache-to: type=gha,scope=${{ github.ref_name }}-php81-cli-vipsffmpeg,mode=max
+          cache-from: type=gha,scope=php81-cli-vipsffmpeg
+          cache-to: type=gha,scope=php81-cli-vipsffmpeg,mode=max
           push: true
           tags: anzusystems/php:${{ github.ref_name }}-php81-cli-vipsffmpeg,anzusystems/php:latest-php81-cli-vipsffmpeg
 
@@ -86,8 +86,8 @@ jobs:
         with:
           context: ./build/php81/fpm/vipsffmpeg-nginx
           file: ./build/php81/fpm/vipsffmpeg-nginx/Dockerfile
-          cache-from: type=gha,scope=${{ github.ref_name }}-php81-fpm-vipsffmpeg-nginx
-          cache-to: type=gha,scope=${{ github.ref_name }}-php81-fpm-vipsffmpeg-nginx,mode=max
+          cache-from: type=gha,scope=php81-fpm-vipsffmpeg-nginx
+          cache-to: type=gha,scope=php81-fpm-vipsffmpeg-nginx,mode=max
           push: true
           tags: anzusystems/php:${{ github.ref_name }}-php81-fpm-vipsffmpeg-nginx,anzusystems/php:latest-php81-fpm-vipsffmpeg-nginx
 
@@ -112,8 +112,8 @@ jobs:
         with:
           context: ./build/php82/cli/base
           file: ./build/php82/cli/base/Dockerfile
-          cache-from: type=gha,scope=${{ github.ref_name }}-php82-cli
-          cache-to: type=gha,scope=${{ github.ref_name }}-php82-cli,mode=max
+          cache-from: type=gha,scope=php82-cli
+          cache-to: type=gha,scope=php82-cli,mode=max
           push: true
           tags: anzusystems/php:${{ github.ref_name }}-php82-cli,anzusystems/php:latest-php82-cli
 
@@ -138,8 +138,8 @@ jobs:
         with:
           context: ./build/php82/cli/vipsffmpeg
           file: ./build/php82/cli/vipsffmpeg/Dockerfile
-          cache-from: type=gha,scope=${{ github.ref_name }}-php82-cli-vipsffmpeg
-          cache-to: type=gha,scope=${{ github.ref_name }}-php82-cli-vipsffmpeg,mode=max
+          cache-from: type=gha,scope=php82-cli-vipsffmpeg
+          cache-to: type=gha,scope=php82-cli-vipsffmpeg,mode=max
           push: true
           tags: anzusystems/php:${{ github.ref_name }}-php82-cli-vipsffmpeg,anzusystems/php:latest-php82-cli-vipsffmpeg
 
@@ -164,8 +164,8 @@ jobs:
         with:
           context: ./build/php82/fpm/vipsffmpeg-nginx
           file: ./build/php82/fpm/vipsffmpeg-nginx/Dockerfile
-          cache-from: type=gha,scope=${{ github.ref_name }}-php82-fpm-vipsffmpeg-nginx
-          cache-to: type=gha,scope=${{ github.ref_name }}-php82-fpm-vipsffmpeg-nginx,mode=max
+          cache-from: type=gha,scope=php82-fpm-vipsffmpeg-nginx
+          cache-to: type=gha,scope=php82-fpm-vipsffmpeg-nginx,mode=max
           push: true
           tags: anzusystems/php:${{ github.ref_name }}-php82-fpm-vipsffmpeg-nginx,anzusystems/php:latest-php82-fpm-vipsffmpeg-nginx
 
