@@ -5,6 +5,8 @@ LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 # ----------------------------------------------------------------------------------------------------------------------
 # COMMON ENVIRONMENT VARIABLES
 # ----------------------------------------------------------------------------------------------------------------------
+# Building envs
+ENV MAKEFLAGS="-j4"
 # Php
 # Php error reporting constants https://www.php.net/manual/en/errorfunc.constants.php
 # Calculate the number for config on https://maximivanov.github.io/php-error-reporting-calculator/
@@ -108,15 +110,16 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
-    yes '' | pecl install mongodb-${PECL_MONGODB_VERSION} && \
-    yes '' | pecl install pcov-${PECL_PCOV_VERSION} && \
-    yes '' | pecl install redis-${PECL_REDIS_VERSION} && \
-    yes '' | pecl install xdebug-${PECL_XDEBUG_VERSION} && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-${PECL_MONGODB_VERSION} && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-${PECL_PCOV_VERSION} && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-${PECL_REDIS_VERSION} && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-${PECL_XDEBUG_VERSION} && \
     docker-php-ext-enable \
         mongodb \
         pcov \
         redis \
         xdebug && \
+    { find /usr/local/lib -type f -print0 | xargs -0r strip --strip-all -p 2>/dev/null || true; } && \
     pecl clear-cache && \
     rm -rf /tmp/pear && \
     apt-get purge \

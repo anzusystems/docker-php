@@ -57,8 +57,9 @@ RUN apt-get update && \
     cd .. && \
     rm -rf vips* && \
 # Pecl Vips installation
-    yes '' | pecl install vips-${PECL_VIPS_VERSION} && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install vips-${PECL_VIPS_VERSION} && \
     docker-php-ext-enable vips && \
+    { find /usr/local/lib -type f -print0 | xargs -0r strip --strip-all -p 2>/dev/null || true; } && \
 # Cleanup
     pecl clear-cache && \
     apt-get purge \

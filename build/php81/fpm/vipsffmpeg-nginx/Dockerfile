@@ -11,6 +11,8 @@ LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 # ----------------------------------------------------------------------------------------------------------------------
 # COMMON ENVIRONMENT VARIABLES
 # ----------------------------------------------------------------------------------------------------------------------
+# Building envs
+ENV MAKEFLAGS="-j4"
 # Php
 # Php error reporting constants https://www.php.net/manual/en/errorfunc.constants.php
 # Calculate the number for config on https://maximivanov.github.io/php-error-reporting-calculator/
@@ -114,15 +116,16 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
-    yes '' | pecl install mongodb-1.15.0 && \
-    yes '' | pecl install pcov-1.0.11 && \
-    yes '' | pecl install redis-5.3.7 && \
-    yes '' | pecl install xdebug-3.2.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.15.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.11 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-5.3.7 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.2.0 && \
     docker-php-ext-enable \
         mongodb \
         pcov \
         redis \
         xdebug && \
+    { find /usr/local/lib -type f -print0 | xargs -0r strip --strip-all -p 2>/dev/null || true; } && \
     pecl clear-cache && \
     rm -rf /tmp/pear && \
     apt-get purge \
@@ -223,8 +226,9 @@ RUN apt-get update && \
     cd .. && \
     rm -rf vips* && \
 # Pecl Vips installation
-    yes '' | pecl install vips-1.0.13 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install vips-1.0.13 && \
     docker-php-ext-enable vips && \
+    { find /usr/local/lib -type f -print0 | xargs -0r strip --strip-all -p 2>/dev/null || true; } && \
 # Cleanup
     pecl clear-cache && \
     apt-get purge \
@@ -294,21 +298,10 @@ ENV NGINX_ACCESS_CONTROL_ALLOW_HEADERS="Accept,Authorization,Cache-Control,Conte
 
 # ----------------------------------------------------------------------------------------------------------------------
 # NGINX
-# Inspiration taken from the official Nginx Dockerfile
-RUN NGINX_GPGKEY=573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62; \
-    found=''; \
-    for server in \
-        ha.pool.sks-keyservers.net \
-        hkp://keyserver.ubuntu.com:80 \
-        hkp://p80.pool.sks-keyservers.net:80 \
-        pgp.mit.edu; \
-    do \
-        echo "Fetching GPG key $NGINX_GPGKEY from $server"; \
-        apt-key adv --keyserver "$server" --keyserver-options timeout=10 --recv-keys "$NGINX_GPGKEY" && found=yes && break; \
-    done; \
-    test -z "$found" && echo >&2 "error: failed to fetch GPG key $NGINX_GPGKEY" && exit 1; \
-    echo "deb http://nginx.org/packages/debian $(lsb_release -cs) nginx" \
-        | tee /etc/apt/sources.list.d/nginx.list && \
+RUN NGINX_KEYRING=/usr/share/keyrings/nginx-archive-keyring.gpg && \
+    NGINX_REPO=nginx && \
+    echo "deb [signed-by=${NGINX_KEYRING}] http://nginx.org/packages/debian $(lsb_release -cs) ${NGINX_REPO}" > /etc/apt/sources.list.d/${NGINX_REPO}.list && \
+    curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor > ${NGINX_KEYRING} && \
     apt-get update && \
     apt-get install --no-install-recommends --no-install-suggests -y \
         nginx=1.22.1-1~bullseye \
