@@ -87,10 +87,12 @@ RUN apt-get update && \
         ${PECL_BUILD_DEPS} \
         ${RUN_DEPS} \
         supervisor=${SUPERVISOR_VERSION}-${SUPERVISOR_PKG_RELEASE} && \
+    docker-php-ext-configure intl && \
     docker-php-ext-configure opcache && \
     docker-php-ext-configure pdo_mysql && \
     docker-php-ext-configure zip && \
     docker-php-ext-install -j$(nproc) \
+        intl \
         opcache \
         pdo_mysql \
         zip && \
