@@ -1,5 +1,5 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# VIPS SETUP START
+# VIPS FFMPEG SETUP START
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ----------------------------------------------------------------------------------------------------------------------
 # VIPS ENVIRONMENT VARIABLES
@@ -8,6 +8,7 @@ ENV VIPS_BUILD_DEPS="automake \
                     build-essential \
                     libexpat1-dev \
                     libfreetype6-dev \
+                    libgirepository1.0-dev \
                     libglib2.0-dev \
                     libgsf-1-dev \
                     libjpeg-dev \
@@ -16,7 +17,11 @@ ENV VIPS_BUILD_DEPS="automake \
                     libmatio-dev \
                     libtiff5-dev \
                     libxml2-dev \
+                    ninja-build \
                     pkg-config"
+ENV PYTHON_BUILD_DEPS="meson \
+                       setuptools \
+                       wheel"
 ENV VIPS_RUN_DEPS="fftw3-dev \
                   gobject-introspection \
                   gtk-doc-tools \
@@ -36,7 +41,9 @@ ENV VIPS_RUN_DEPS="fftw3-dev \
                   libpoppler-glib8 \
                   librsvg2-dev \
                   libturbojpeg0-dev \
-                  libwebp-dev"
+                  libwebp-dev \
+                  python3 \
+                  python3-pip"
 
 # ----------------------------------------------------------------------------------------------------------------------
 # VIPS
@@ -45,22 +52,29 @@ RUN apt-get update && \
     apt-get install -y \
         ${VIPS_BUILD_DEPS} \
         ${VIPS_RUN_DEPS} && \
+    pip install -U \
+        pip \
+        ${PYTHON_BUILD_DEPS} && \
     cd /tmp && \
     wget -q \
         https://github.com/libvips/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.gz \
         -O vips.tar.gz && \
     tar xvzf vips.tar.gz && \
     cd vips-${LIBVIPS_VERSION} && \
-    ./configure && \
-    make && \
-    make install && \
-    cd .. && \
+    meson setup build-dir --libdir=lib --buildtype=release && \
+    cd build-dir && \
+    meson compile && \
+    meson install && \
+    cd ../.. && \
     rm -rf vips* && \
 # Pecl Vips installation
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install vips-${PECL_VIPS_VERSION} && \
     docker-php-ext-enable vips && \
     { find /usr/local/lib -type f -print0 | xargs -0r strip --strip-all -p 2>/dev/null || true; } && \
 # Cleanup
+    pip uninstall -y \
+        ${PYTHON_BUILD_DEPS} && \
+    pip cache purge && \
     pecl clear-cache && \
     apt-get purge \
         -y --auto-remove \
@@ -89,5 +103,5 @@ RUN apt-get update && \
     rm -r /var/lib/apt/lists/*
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# VIPS SETUP END
+# VIPS FFMPEG SETUP END
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
