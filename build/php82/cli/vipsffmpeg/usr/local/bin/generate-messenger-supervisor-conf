@@ -3,13 +3,15 @@
 set -euo pipefail
 
 # Messenger configuration
-SUPERVISOR_AUTOSTART=${SUPERVISOR_AUTOSTART_MESSENGERS:-true}
-SUPERVISOR_PRIORITY=20
+SUPERVISOR_MESSENGER_AUTOSTART=${SUPERVISOR_MESSENGER_AUTOSTART:-true}
+SUPERVISOR_MESSENGER_LIMIT=${SUPERVISOR_MESSENGER_LIMIT:-1000}
+SUPERVISOR_MESSENGER_NUMPROCS=${SUPERVISOR_MESSENGER_NUMPROCS:-2}
+SUPERVISOR_MESSENGER_PRIORITY=20
+SUPERVISOR_MESSENGER_TIME_LIMIT=${SUPERVISOR_MESSENGER_TIME_LIMIT:-3600}
+SUPERVISOR_MESSENGER_VERBOSITY=${SUPERVISOR_MESSENGER_VERBOSITY:-}
 # Logging configuration
 MESSENGER_LOG_PREFIX=${MESSENGER_LOG_PREFIX:-/var/www/html/var/log}
 SUPERVISOR_LOG_TO_FILE_ENABLED=${SUPERVISOR_LOG_TO_FILE_ENABLED:-true}
-SUPERVISOR_MESSENGER_DEFAULT_VERBOSITY=
-SUPERVISOR_MESSENGER_VERBOSITY=${SUPERVISOR_MESSENGER_VERBOSITY:-${SUPERVISOR_MESSENGER_DEFAULT_VERBOSITY}}
 SUPERVISOR_STDOUT_LOGFILE="/dev/stdout"
 SUPERVISOR_STDERR_LOGFILE="/dev/stderr"
 SUPERVISOR_LOGFILE_MAXBYTES="0"
@@ -25,17 +27,17 @@ for messenger in ${SUPERVISOR_MESSENGER_NAMES}; do
     cat <<EOF >"/etc/supervisor/conf.d/messenger-${messenger}.conf"
 ; Messenger ${messenger} worker
 [program:messenger-${messenger}]
-command=start-messenger --name ${messenger} ${SUPERVISOR_MESSENGER_VERBOSITY}
-autostart=${SUPERVISOR_AUTOSTART}
+command=start-messenger --name ${messenger} --limit ${SUPERVISOR_MESSENGER_LIMIT} --time-limit ${SUPERVISOR_MESSENGER_TIME_LIMIT} ${SUPERVISOR_MESSENGER_VERBOSITY}
+autostart=${SUPERVISOR_MESSENGER_AUTOSTART}
 # Restart on unexpected exit codes
 autorestart=unexpected
 # Expect 37 exit code returned when stop file exists
 exitcodes=37
 startretries=10
 startsecs=0
-priority=${SUPERVISOR_PRIORITY}
+priority=${SUPERVISOR_MESSENGER_PRIORITY}
 # Number of consumers to run
-numprocs=2
+numprocs=${SUPERVISOR_MESSENGER_NUMPROCS}
 process_name=%(program_name)s_%(process_num)02d
 environment=SUPERVISOR_PROGRAM_NAME=%(program_name)s:%(program_name)s_%(process_num)02d,SUPERVISOR_PROCESS_NUM=%(process_num)s
 stdout_logfile=${SUPERVISOR_STDOUT_LOGFILE}
@@ -45,7 +47,7 @@ stderr_logfile=${SUPERVISOR_STDERR_LOGFILE}
 stderr_logfile_maxbytes=${SUPERVISOR_LOGFILE_MAXBYTES}
 stderr_logfile_backups=${SUPERVISOR_LOGFILE_BACKUPS}
 EOF
-    ((SUPERVISOR_PRIORITY++))
+    ((SUPERVISOR_MESSENGER_PRIORITY++))
 done
 
 mkdir -p "${MESSENGER_LOG_PREFIX}"

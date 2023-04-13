@@ -22,7 +22,12 @@ server {
         set $cors_static 'true';
     }
 
-    #App paths
+    # Strip index.php from URL
+    if ($request_uri ~* "^/index\.php(/?.*)") {
+        return 301 $real_scheme://$host$1;
+    }
+
+    # App paths
     location / {
         try_files $uri /index.php$is_args$args;
     }
@@ -35,12 +40,13 @@ server {
         fastcgi_buffers 8 ${NGINX_PHP_FASTCGI_BUFFER_SIZE};
         fastcgi_buffer_size ${NGINX_PHP_FASTCGI_BUFFER_SIZE};
 
+        fastcgi_split_path_info ${NGINX_PHP_FASTCGI_SPLIT_PATH_INFO};
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         fastcgi_param PATH_INFO $fastcgi_path_info;
         fastcgi_param SERVER_NAME $host;
-        fastcgi_connect_timeout ${NGINX_FASTCGI_CONNECT_TIMEOUT};
-        fastcgi_read_timeout ${NGINX_FASTCGI_READ_TIMEOUT};
-        fastcgi_send_timeout ${NGINX_FASTCGI_SEND_TIMEOUT};
+        fastcgi_connect_timeout ${NGINX_PHP_FASTCGI_CONNECT_TIMEOUT};
+        fastcgi_read_timeout ${NGINX_PHP_FASTCGI_READ_TIMEOUT};
+        fastcgi_send_timeout ${NGINX_PHP_FASTCGI_SEND_TIMEOUT};
 
         # Mitigate https://httpoxy.org/ vulnerabilities
         fastcgi_param HTTP_PROXY "";
@@ -102,6 +108,10 @@ server {
             add_header 'Content-Type' 'text/plain charset=UTF-8';
             return 403 'Origin host not allowed!';
         }
+    }
+
+    location ~ ${NGINX_PHP_404_LOCATION_REGEX} {
+        return 404;
     }
 
     location ~* ${NGINX_STATIC_LOCATION_REGEX} {

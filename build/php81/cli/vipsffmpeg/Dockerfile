@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.1.13-cli
+FROM php:8.1.17-cli
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -118,7 +118,7 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.15.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.15.1 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.11 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-5.3.7 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.2.0 && \
@@ -152,7 +152,7 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.4.4
+        --version=2.5.5
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-CLI
@@ -227,13 +227,13 @@ RUN apt-get update && \
         pip \
         ${PYTHON_BUILD_DEPS} && \
     cd /tmp && \
-    wget -q \
-        https://github.com/libvips/libvips/releases/download/v8.13.3/vips-8.13.3.tar.gz \
-        -O vips.tar.gz && \
-    tar xvzf vips.tar.gz && \
-    cd vips-8.13.3 && \
-    meson setup build-dir --libdir=lib --buildtype=release && \
-    cd build-dir && \
+    wget -qc \
+        https://github.com/libvips/libvips/releases/download/v8.14.2/vips-8.14.2.tar.xz \
+        -O - | \
+        tar -xJ && \
+    cd vips-8.14.2 && \
+    meson setup release --libdir=lib --buildtype=release && \
+    cd release && \
     meson compile && \
     meson install && \
     cd ../.. && \
@@ -259,16 +259,16 @@ RUN apt-get update && \
 # Package installation
 RUN apt-get update && \
     apt-get install -y \
-        ffmpeg=7:4.3.4-0+deb11u1 \
-        libavcodec58=7:4.3.4-0+deb11u1 \
-        libavdevice58=7:4.3.4-0+deb11u1 \
-        libavfilter7=7:4.3.4-0+deb11u1 \
-        libavformat58=7:4.3.4-0+deb11u1 \
-        libavresample4=7:4.3.4-0+deb11u1 \
-        libavutil56=7:4.3.4-0+deb11u1 \
-        libpostproc55=7:4.3.4-0+deb11u1 \
-        libswresample3=7:4.3.4-0+deb11u1 \
-        libswscale5=7:4.3.4-0+deb11u1 && \
+        ffmpeg=7:4.3.5-0+deb11u1 \
+        libavcodec58=7:4.3.5-0+deb11u1 \
+        libavdevice58=7:4.3.5-0+deb11u1 \
+        libavfilter7=7:4.3.5-0+deb11u1 \
+        libavformat58=7:4.3.5-0+deb11u1 \
+        libavresample4=7:4.3.5-0+deb11u1 \
+        libavutil56=7:4.3.5-0+deb11u1 \
+        libpostproc55=7:4.3.5-0+deb11u1 \
+        libswresample3=7:4.3.5-0+deb11u1 \
+        libswscale5=7:4.3.5-0+deb11u1 && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*

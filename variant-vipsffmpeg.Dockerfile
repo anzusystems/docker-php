@@ -56,13 +56,13 @@ RUN apt-get update && \
         pip \
         ${PYTHON_BUILD_DEPS} && \
     cd /tmp && \
-    wget -q \
-        https://github.com/libvips/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.gz \
-        -O vips.tar.gz && \
-    tar xvzf vips.tar.gz && \
+    wget -qc \
+        https://github.com/libvips/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.xz \
+        -O - | \
+        tar -xJ && \
     cd vips-${LIBVIPS_VERSION} && \
-    meson setup build-dir --libdir=lib --buildtype=release && \
-    cd build-dir && \
+    meson setup release --libdir=lib --buildtype=release && \
+    cd release && \
     meson compile && \
     meson install && \
     cd ../.. && \

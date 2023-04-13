@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.2.0-cli
+FROM php:8.2.4-cli
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -118,7 +118,7 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.15.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.15.1 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.11 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-5.3.7 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.2.0 && \
@@ -152,7 +152,7 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.4.4
+        --version=2.5.5
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-CLI

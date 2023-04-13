@@ -29,6 +29,12 @@ function help() {
     \n"
 }
 
+function kill_children() {
+    pkill -9 -P $$
+}
+
+trap kill_children TERM
+
 while [ "$#" -gt 0 ]; do
     case $1 in
     --name)
@@ -71,7 +77,7 @@ while [ "$#" -gt 0 ]; do
         exit
         ;;
     *)
-        echo "[WARN] Unknown command line switch: $1"
+        echo "[WARN] Unknown command line switch: $1" >&2
         help
         exit 1
         ;;
@@ -91,5 +97,6 @@ if [[ "${APP_READ_ONLY_MODE:-0}" -eq 1 || (-n "${SUPERVISOR_PROGRAM_NAME}" && -f
 else
     echo "[INFO] Starting ${MESSENGER_NAME} worker"
     # shellcheck disable=SC2086
-    bin/console messenger:consume "${MESSENGER_NAME}" --limit "${LIMIT}" --time-limit "${TIME_LIMIT}" ${VERBOSITY}
+    bin/console messenger:consume "${MESSENGER_NAME}" --limit "${LIMIT}" --time-limit "${TIME_LIMIT}" ${VERBOSITY} &
+    wait
 fi

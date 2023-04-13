@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.1.13-fpm
+FROM php:8.1.17-fpm
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -118,7 +118,7 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.15.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.15.1 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.11 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-5.3.7 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.2.0 && \
@@ -152,7 +152,7 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.4.4
+        --version=2.5.5
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-CLI
@@ -227,13 +227,13 @@ RUN apt-get update && \
         pip \
         ${PYTHON_BUILD_DEPS} && \
     cd /tmp && \
-    wget -q \
-        https://github.com/libvips/libvips/releases/download/v8.13.3/vips-8.13.3.tar.gz \
-        -O vips.tar.gz && \
-    tar xvzf vips.tar.gz && \
-    cd vips-8.13.3 && \
-    meson setup build-dir --libdir=lib --buildtype=release && \
-    cd build-dir && \
+    wget -qc \
+        https://github.com/libvips/libvips/releases/download/v8.14.2/vips-8.14.2.tar.xz \
+        -O - | \
+        tar -xJ && \
+    cd vips-8.14.2 && \
+    meson setup release --libdir=lib --buildtype=release && \
+    cd release && \
     meson compile && \
     meson install && \
     cd ../.. && \
@@ -259,16 +259,16 @@ RUN apt-get update && \
 # Package installation
 RUN apt-get update && \
     apt-get install -y \
-        ffmpeg=7:4.3.4-0+deb11u1 \
-        libavcodec58=7:4.3.4-0+deb11u1 \
-        libavdevice58=7:4.3.4-0+deb11u1 \
-        libavfilter7=7:4.3.4-0+deb11u1 \
-        libavformat58=7:4.3.4-0+deb11u1 \
-        libavresample4=7:4.3.4-0+deb11u1 \
-        libavutil56=7:4.3.4-0+deb11u1 \
-        libpostproc55=7:4.3.4-0+deb11u1 \
-        libswresample3=7:4.3.4-0+deb11u1 \
-        libswscale5=7:4.3.4-0+deb11u1 && \
+        ffmpeg=7:4.3.5-0+deb11u1 \
+        libavcodec58=7:4.3.5-0+deb11u1 \
+        libavdevice58=7:4.3.5-0+deb11u1 \
+        libavfilter7=7:4.3.5-0+deb11u1 \
+        libavformat58=7:4.3.5-0+deb11u1 \
+        libavresample4=7:4.3.5-0+deb11u1 \
+        libavutil56=7:4.3.5-0+deb11u1 \
+        libpostproc55=7:4.3.5-0+deb11u1 \
+        libswresample3=7:4.3.5-0+deb11u1 \
+        libswscale5=7:4.3.5-0+deb11u1 && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
@@ -288,15 +288,17 @@ ENV NGINX_ACCESS_CONTROL_ALLOW_HEADERS="Accept,Authorization,Cache-Control,Conte
     NGINX_CLIENT_MAX_BODY_SIZE=1m \
     NGINX_CORS_CONFIG=true \
     NGINX_ERROR_LOG="/var/log/nginx/error.log warn" \
-    NGINX_FASTCGI_CONNECT_TIMEOUT="60s" \
-    NGINX_FASTCGI_READ_TIMEOUT="60s" \
-    NGINX_FASTCGI_SEND_TIMEOUT="60s" \
     NGINX_KEEPALIVE_REQUESTS=10000 \
     NGINX_KEEPALIVE_TIMEOUT=650 \
     NGINX_LARGE_CLIENT_HEADER_BUFFERS_SIZE=16k \
+    NGINX_PHP_404_LOCATION_REGEX="\.php$" \
     NGINX_PHP_ACCESS_CONTROL_MAX_AGE=1728000 \
     NGINX_PHP_FASTCGI_BUFFER_SIZE=32K \
-    NGINX_PHP_LOCATION_REGEX="^/.+\.php(/|$)" \
+    NGINX_PHP_FASTCGI_CONNECT_TIMEOUT="60s" \
+    NGINX_PHP_FASTCGI_READ_TIMEOUT="60s" \
+    NGINX_PHP_FASTCGI_SEND_TIMEOUT="60s" \
+    NGINX_PHP_FASTCGI_SPLIT_PATH_INFO="^(.+\.php)(/.*)$" \
+    NGINX_PHP_LOCATION_REGEX="^/index\.php(/|$)" \
     NGINX_PHP_STRICT_TRANSPORT_SECURITY="max-age=31536000" \
     NGINX_PHP_X_ROBOTS_TAG="noindex, nofollow, noarchive, nosnippet" \
     NGINX_PORT=8080 \
@@ -320,11 +322,11 @@ RUN NGINX_KEYRING=/usr/share/keyrings/nginx-archive-keyring.gpg && \
     curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor > ${NGINX_KEYRING} && \
     apt-get update && \
     apt-get install --no-install-recommends --no-install-suggests -y \
-        nginx=1.22.1-1~bullseye \
-        nginx-module-xslt=1.22.1-1~bullseye \
-        nginx-module-geoip=1.22.1-1~bullseye \
-        nginx-module-image-filter=1.22.1-1~bullseye \
-        nginx-module-njs=1.22.1+0.7.9-1~bullseye && \
+        nginx=1.24.0-1~bullseye \
+        nginx-module-xslt=1.24.0-1~bullseye \
+        nginx-module-geoip=1.24.0-1~bullseye \
+        nginx-module-image-filter=1.24.0-1~bullseye \
+        nginx-module-njs=1.24.0+0.7.12-1~bullseye && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

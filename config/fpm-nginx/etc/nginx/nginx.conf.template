@@ -12,7 +12,11 @@ http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
 
-    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" $status '
+    map $http_x_forwarded_proto $real_scheme {
+    default $http_x_forwarded_proto;
+    ''      $scheme;
+    }
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request_method $real_scheme://$host$request_uri $server_protocol" $status '
                       '$body_bytes_sent'
                       'B '
                       '$request_time'
