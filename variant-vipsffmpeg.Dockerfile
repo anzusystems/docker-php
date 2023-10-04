@@ -18,32 +18,33 @@ ENV VIPS_BUILD_DEPS="automake \
                     libtiff5-dev \
                     libxml2-dev \
                     ninja-build \
-                    pkg-config"
-ENV PYTHON_BUILD_DEPS="meson \
-                       setuptools \
-                       wheel"
-ENV VIPS_RUN_DEPS="fftw3-dev \
-                  gobject-introspection \
-                  gtk-doc-tools \
-                  imagemagick \
-                  jpegoptim \
-                  libcfitsio-dev \
-                  libcurl4-openssl-dev \
-                  libexif-dev \
-                  libgif-dev \
-                  libgsf-1-114 \
-                  libjpeg62-turbo \
-                  libmatio11 \
-                  liborc-0.4-dev \
-                  libopenexr25 \
-                  libopenslide-dev \
-                  libpango1.0-dev \
-                  libpoppler-glib8 \
-                  librsvg2-dev \
-                  libturbojpeg0-dev \
-                  libwebp-dev \
-                  python3 \
-                  python3-pip"
+                    pkg-config \
+                    python3-mesonpy \
+                    python3-setuptools \
+                    python3-wheel"
+ENV VIPS_RUN_DEPS="gobject-introspection \
+                   gtk-doc-tools \
+                   imagemagick \
+                   jpegoptim \
+                   libcfitsio-dev \
+                   libcurl4-openssl-dev \
+                   libexif-dev \
+                   libfftw3-dev \
+                   libfile-mimeinfo-perl \
+                   libgif-dev \
+                   libgsf-1-114 \
+                   libjpeg62-turbo \
+                   libmatio11 \
+                   liborc-0.4-dev \
+                   libopenexr-3-1-30 \
+                   libopenslide-dev \
+                   libpango1.0-dev \
+                   libpoppler-glib8 \
+                   librsvg2-dev \
+                   libturbojpeg0-dev \
+                   libwebp-dev \
+                   python3 \
+                   python3-pip"
 
 # ----------------------------------------------------------------------------------------------------------------------
 # VIPS
@@ -52,9 +53,6 @@ RUN apt-get update && \
     apt-get install -y \
         ${VIPS_BUILD_DEPS} \
         ${VIPS_RUN_DEPS} && \
-    pip install -U \
-        pip \
-        ${PYTHON_BUILD_DEPS} && \
     cd /tmp && \
     wget -qc \
         https://github.com/libvips/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.xz \
@@ -72,9 +70,6 @@ RUN apt-get update && \
     docker-php-ext-enable vips && \
     { find /usr/local/lib -type f -print0 | xargs -0r strip --strip-all -p 2>/dev/null || true; } && \
 # Cleanup
-    pip uninstall -y \
-        ${PYTHON_BUILD_DEPS} && \
-    pip cache purge && \
     pecl clear-cache && \
     apt-get purge \
         -y --auto-remove \
@@ -89,15 +84,15 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y \
         ffmpeg=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libavcodec58=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libavdevice58=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libavfilter7=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libavformat58=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libavresample4=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libavutil56=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libpostproc55=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libswresample3=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libswscale5=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} && \
+        libavcodec59=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
+        libavdevice59=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
+        libavfilter8=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
+        libavformat59=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
+        libswresample4=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
+        libavutil57=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
+        libpostproc56=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
+        libswresample4=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
+        libswscale6=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
