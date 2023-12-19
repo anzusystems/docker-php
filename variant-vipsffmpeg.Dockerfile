@@ -49,7 +49,8 @@ ENV VIPS_RUN_DEPS="gobject-introspection \
 # ----------------------------------------------------------------------------------------------------------------------
 # VIPS
 # Dependency installation
-RUN apt-get update && \
+RUN DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
     apt-get install -y \
         ${VIPS_BUILD_DEPS} \
         ${VIPS_RUN_DEPS} && \
@@ -81,7 +82,8 @@ RUN apt-get update && \
 # ----------------------------------------------------------------------------------------------------------------------
 # FFMPEG
 # Package installation
-RUN apt-get update && \
+RUN DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
     apt-get install -y \
         ffmpeg=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
         libavcodec59=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \

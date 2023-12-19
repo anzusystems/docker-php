@@ -1,5 +1,5 @@
 #!/bin/bash
-# Cron script wrapper to run command with multiple options
+# Cron script wrapper used to run command with multiple options
 set -euo pipefail
 
 CRON_LOG_LEVEL="${CRON_LOG_LEVEL:-warn}"

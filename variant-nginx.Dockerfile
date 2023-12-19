@@ -38,10 +38,11 @@ ENV NGINX_ACCESS_CONTROL_ALLOW_HEADERS="Accept,Authorization,Cache-Control,Conte
 
 # ----------------------------------------------------------------------------------------------------------------------
 # NGINX
-RUN NGINX_KEYRING=/usr/share/keyrings/nginx-archive-keyring.gpg && \
-    NGINX_REPO=nginx && \
-    echo "deb [signed-by=${NGINX_KEYRING}] http://nginx.org/packages/debian $(lsb_release -cs) ${NGINX_REPO}" > /etc/apt/sources.list.d/${NGINX_REPO}.list && \
-    curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor > ${NGINX_KEYRING} && \
+RUN DEBIAN_FRONTEND=noninteractive && \
+    NGINX_KEYRING=/usr/share/keyrings/nginx-archive-keyring.gpg && \
+    NGINX_REPO="$(lsb_release -c -s) nginx" && \
+    curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o ${NGINX_KEYRING} && \
+    echo "deb [signed-by=${NGINX_KEYRING}] http://nginx.org/packages/debian ${NGINX_REPO}" > /etc/apt/sources.list.d/nginx.list && \
     apt-get update && \
     apt-get install --no-install-recommends --no-install-suggests -y \
         nginx=${NGINX_VERSION}-${NGINX_PKG_RELEASE} \
@@ -49,6 +50,7 @@ RUN NGINX_KEYRING=/usr/share/keyrings/nginx-archive-keyring.gpg && \
         nginx-module-geoip=${NGINX_VERSION}-${NGINX_PKG_RELEASE} \
         nginx-module-image-filter=${NGINX_VERSION}-${NGINX_PKG_RELEASE} \
         nginx-module-njs=${NGINX_VERSION}+${NGINX_NJS_VERSION}-${NGINX_PKG_RELEASE} && \
+# Cleanup
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

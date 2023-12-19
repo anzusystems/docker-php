@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to create user with provided UID and GID and fix permissions for folders
+# Script used to create user with provided UID and GID and fix permissions for folders
 set -euo pipefail
 
 USER_UID=${1:-1000}

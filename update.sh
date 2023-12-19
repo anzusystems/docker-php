@@ -12,8 +12,8 @@ TMP_FINAL_DOCKERFILE_FILE="/tmp/php_tmp_final_variant_Dockerfile"
 
 declare -A VERSION_LIST
 VERSION_LIST=(
-    [8.1]="${PHP81_VERSION}"
     [8.2]="${PHP82_VERSION}"
+    [8.3]="${PHP83_VERSION}"
 )
 
 declare -A VARIANTS_LIST
@@ -56,7 +56,10 @@ for version in "${VERSION_TAGS[@]}"; do
             # Temporary variant dockerfile
             IFS='-'
             for type in ${VARIANT}; do
-                cat "variant-${type}.Dockerfile" >>${TMP_DOCKERFILE_FILE}
+                variant_dockerfile_name="variant-${type}.Dockerfile"
+                if [ -f "$variant_dockerfile_name" ]; then
+                    cat "$variant_dockerfile_name" >>${TMP_DOCKERFILE_FILE}
+                fi
             done
             IFS=${DEFAULT_IFS}
             # Variables
