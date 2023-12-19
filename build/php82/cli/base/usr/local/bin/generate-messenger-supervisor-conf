@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to generate messenger supervisor conf files inside the container
+# Script used to generate messenger supervisor conf files inside the container
 set -euo pipefail
 
 # Messenger configuration

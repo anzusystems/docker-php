@@ -8,25 +8,26 @@ Additionally, it has preinstalled some libraries (xdebug, libvips, redis, mongod
 
 ## What's inside
 
-- PHP8.1 - 8.1.24
-- PHP8.2 - 8.2.11
-- PHP Mongodb ext - 1.16.2
-- PHP Redis ext - 5.3.7
+- PHP 8.2 - 8.2.13
+- PHP 8.3 - 8.3.0
+- PHP Apcu ext - 5.1.23
+- PHP Mongodb ext - 1.17.1
+- PHP Redis ext - 6.0.2
 - PHP Pcov ext - 1.0.11
-- PHP Xdebug ext - 3.2.2
+- PHP Xdebug ext - 3.3.1
 - Redis (client) - 6.2.13
 - Supervisor - 4.2.5
-- Composer - 2.6.4
+- Composer - 2.6.6
 - Vipsffmpeg variant:
   - PHP Vips ext - 1.0.13
-  - FFmpeg - 5.1.3
-  - LibVips - 8.14.5
+  - FFmpeg - 5.1.4
+  - LibVips - 8.15.1
 - Nginx variant:
   - Nginx - 1.24.0
   - Nginx-xslt - 1.24.0
   - Nginx-geoip - 1.24.0
   - Nginx-image-filter - 1.24.0
-  - Nginx-njs - 0.8.1
+  - Nginx-njs - 0.8.2
 
 ### Special common commands
 
