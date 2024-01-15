@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.3.0-cli
+FROM php:8.3.1-cli
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -95,11 +95,13 @@ RUN apt-get update && \
         supervisor=4.2.5-1 && \
     docker-php-ext-configure intl && \
     docker-php-ext-configure opcache && \
+    docker-php-ext-configure pcntl --enable-pcntl && \
     docker-php-ext-configure pdo_mysql && \
     docker-php-ext-configure zip && \
     docker-php-ext-install -j$(nproc) \
         intl \
         opcache \
+        pcntl \
         pdo_mysql \
         zip && \
     apt-get purge \
@@ -120,7 +122,7 @@ RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.23 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.17.1 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.17.2 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.11 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.0.2 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.3.1 && \
