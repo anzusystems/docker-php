@@ -8,10 +8,10 @@ Additionally, it has preinstalled some libraries (xdebug, libvips, redis, mongod
 
 ## What's inside
 
-- PHP 8.2 - 8.2.13
-- PHP 8.3 - 8.3.0
+- PHP 8.2 - 8.2.15
+- PHP 8.3 - 8.3.2
 - PHP Apcu ext - 5.1.23
-- PHP Mongodb ext - 1.17.1
+- PHP Mongodb ext - 1.17.2
 - PHP Redis ext - 6.0.2
 - PHP Pcov ext - 1.0.11
 - PHP Xdebug ext - 3.3.1
