@@ -33,6 +33,7 @@ ENV VIPS_RUN_DEPS="gobject-introspection \
                    libfile-mimeinfo-perl \
                    libgif-dev \
                    libgsf-1-114 \
+                   libheif-dev \
                    libjpeg62-turbo \
                    libmatio11 \
                    liborc-0.4-dev \

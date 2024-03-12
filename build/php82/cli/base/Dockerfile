@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.2.15-cli
+FROM php:8.2.16-cli
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -159,7 +159,7 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.6.6
+        --version=2.7.1
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-TOOLS
@@ -170,7 +170,7 @@ RUN DEBIAN_FRONTEND=noninteractive && \
     curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o ${REDIS_KEYRING} && \
     echo "deb [signed-by=${REDIS_KEYRING}] https://packages.redis.io/deb ${REDIS_REPO} main" > /etc/apt/sources.list.d/redis.list && \
     apt-get update && \
-    apt-get install -y redis-tools=6:6.2.13-1rl1~bookworm1 && \
+    apt-get install -y redis-tools=6:6.2.14-1rl1~bookworm1 && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
