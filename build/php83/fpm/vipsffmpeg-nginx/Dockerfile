@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.3.3-fpm
+FROM php:8.3.6-fpm
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -13,6 +13,8 @@ LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 # ----------------------------------------------------------------------------------------------------------------------
 # Building envs
 ENV MAKEFLAGS="-j4"
+# Common envs
+ENV PROJECT_ROOT="/var/www/html"
 # Php
 # Php error reporting constants https://www.php.net/manual/en/errorfunc.constants.php
 # Calculate the number for config on https://maximivanov.github.io/php-error-reporting-calculator/
@@ -45,7 +47,8 @@ ENV PHP_DATE_TIMEZONE="UTC" \
     PHP_SLOW_LOG="/proc/self/fd/2" \
     PHP_UPLOAD_MAX_FILESIZE="20M" \
     PHP_VARIABLES_ORDER="GPCS" \
-    XDEBUG_LOG="/var/www/html/xdebug.log"
+    PROJECT_WEBROOT="${PROJECT_ROOT}/public" \
+    XDEBUG_LOG="${PROJECT_ROOT}/xdebug.log"
 # Composer
 ENV COMPOSER_HOME="/composer" \
     PATH="/composer/vendor/bin:$PATH"
@@ -122,10 +125,10 @@ RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.23 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.17.2 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.18.1 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.11 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.0.2 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.3.1 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.3.2 && \
     docker-php-ext-enable \
         apcu \
         mongodb \
@@ -159,7 +162,7 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.7.1
+        --version=2.7.2
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-TOOLS
@@ -170,7 +173,7 @@ RUN DEBIAN_FRONTEND=noninteractive && \
     curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o ${REDIS_KEYRING} && \
     echo "deb [signed-by=${REDIS_KEYRING}] https://packages.redis.io/deb ${REDIS_REPO} main" > /etc/apt/sources.list.d/redis.list && \
     apt-get update && \
-    apt-get install -y redis-tools=6:6.2.14-1rl1~bookworm1 && \
+    apt-get install -y redis-tools=6:7.2.4-1rl1~bookworm1 && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
@@ -235,10 +238,10 @@ RUN DEBIAN_FRONTEND=noninteractive && \
         ${VIPS_RUN_DEPS} && \
     cd /tmp && \
     wget -qc \
-        https://github.com/libvips/libvips/releases/download/v8.15.1/vips-8.15.1.tar.xz \
+        https://github.com/libvips/libvips/releases/download/v8.15.2/vips-8.15.2.tar.xz \
         -O - | \
         tar -xJ && \
-    cd vips-8.15.1 && \
+    cd vips-8.15.2 && \
     meson setup release --libdir=lib --buildtype=release && \
     cd release && \
     meson compile && \
@@ -307,7 +310,6 @@ ENV NGINX_ACCESS_CONTROL_ALLOW_HEADERS="Accept,Authorization,Cache-Control,Conte
     NGINX_PHP_STRICT_TRANSPORT_SECURITY="max-age=31536000" \
     NGINX_PHP_X_ROBOTS_TAG="noindex, nofollow, noarchive, nosnippet" \
     NGINX_PORT=8080 \
-    NGINX_ROOT=/var/www/html/public \
     NGINX_SERVER_TOKENS="off" \
     NGINX_STATIC_ALLOWED_ORIGINS_REGEX="^https?://.*" \
     NGINX_STATIC_CACHE_CONTROL_HEADER="public, max-age=31557600, s-maxage=31557600" \
@@ -357,6 +359,6 @@ COPY ./usr /usr
 # RUN
 # Run setup and entrypoint start
 # ----------------------------------------------------------------------------------------------------------------------
-WORKDIR /var/www/html
+WORKDIR ${PROJECT_ROOT}
 
 ENTRYPOINT ["docker-entrypoint"]

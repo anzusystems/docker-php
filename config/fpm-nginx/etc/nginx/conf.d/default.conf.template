@@ -5,7 +5,7 @@ map $status $static_cache_control_header {
 
 server {
     listen ${NGINX_PORT} default_server;
-    root ${NGINX_ROOT};
+    root ${PROJECT_WEBROOT};
 
     sendfile off;
     client_body_buffer_size ${NGINX_CLIENT_BODY_BUFFER_SIZE};

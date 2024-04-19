@@ -3,7 +3,7 @@
 set -euo pipefail
 
 CRON_LOG_LEVEL="${CRON_LOG_LEVEL:-warn}"
-CRON_LOG_DIR="${CRON_LOG_DIR:-/var/www/html/var/log}"
+CRON_LOG_DIR="${CRON_LOG_DIR:-${PROJECT_ROOT:-/var/www/html}/var/log}"
 
 ARGS=$*
 COMMAND_NAME=""
@@ -98,7 +98,7 @@ function execute() {
 
             _info "Starting cron task \"${COMMAND_NAME}\""
 
-            cd /var/www/html || exit 1
+            cd "${PROJECT_ROOT:-/var/www/html}" || exit 1
             if [ -n "${LOCK_FILE}" ]; then
                 _set
                 flock -w 50 -E 99 "${LOCK_FILE}" bash -c "$command" || true

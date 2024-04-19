@@ -11,7 +11,7 @@ TIME_LIMIT=3600
 LIMIT=1000
 VERBOSITY=""
 
-cd /var/www/html || exit 1
+cd "${PROJECT_ROOT:-/var/www/html}" || exit 1
 
 function help() {
     echo -en "$(printf %q "${BASH_SOURCE[0]}") [OPERATION] [OPTIONS]

@@ -24,7 +24,6 @@ ENV NGINX_ACCESS_CONTROL_ALLOW_HEADERS="Accept,Authorization,Cache-Control,Conte
     NGINX_PHP_STRICT_TRANSPORT_SECURITY="max-age=31536000" \
     NGINX_PHP_X_ROBOTS_TAG="noindex, nofollow, noarchive, nosnippet" \
     NGINX_PORT=8080 \
-    NGINX_ROOT=/var/www/html/public \
     NGINX_SERVER_TOKENS="off" \
     NGINX_STATIC_ALLOWED_ORIGINS_REGEX="^https?://.*" \
     NGINX_STATIC_CACHE_CONTROL_HEADER="public, max-age=31557600, s-maxage=31557600" \

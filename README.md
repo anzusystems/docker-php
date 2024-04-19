@@ -8,26 +8,28 @@ Additionally, it has preinstalled some libraries (xdebug, libvips, redis, mongod
 
 ## What's inside
 
-- PHP 8.2 - 8.2.16
-- PHP 8.3 - 8.3.3
-- PHP Apcu ext - 5.1.23
-- PHP Mongodb ext - 1.17.2
-- PHP Redis ext - 6.0.2
-- PHP Pcov ext - 1.0.11
-- PHP Xdebug ext - 3.3.1
-- Redis (client) - 6.2.14
-- Supervisor - 4.2.5
-- Composer - 2.7.1
+- PHP 8.2
+- PHP 8.3
+- PHP Apcu ext
+- PHP Mongodb ext
+- PHP Redis ext
+- PHP Pcov ext
+- PHP Xdebug ext
+- Redis (client)
+- Supervisor
+- Composer
 - Vipsffmpeg variant:
-  - PHP Vips ext - 1.0.13
-  - FFmpeg - 5.1.4
-  - LibVips - 8.15.1
+  - PHP Vips ext
+  - FFmpeg
+  - LibVips
 - Nginx variant:
-  - Nginx - 1.24.0
-  - Nginx-xslt - 1.24.0
-  - Nginx-geoip - 1.24.0
-  - Nginx-image-filter - 1.24.0
-  - Nginx-njs - 0.8.3
+  - Nginx
+  - Nginx-xslt
+  - Nginx-geoip
+  - Nginx-image-filter
+  - Nginx-njs
+
+See versions in [version.conf](https://github.com/anzusystems/docker-php/blob/main/versions.conf) file.
 
 ### Special common commands
 

@@ -7,6 +7,8 @@ LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 # ----------------------------------------------------------------------------------------------------------------------
 # Building envs
 ENV MAKEFLAGS="-j4"
+# Common envs
+ENV PROJECT_ROOT="/var/www/html"
 # Php
 # Php error reporting constants https://www.php.net/manual/en/errorfunc.constants.php
 # Calculate the number for config on https://maximivanov.github.io/php-error-reporting-calculator/
@@ -39,7 +41,8 @@ ENV PHP_DATE_TIMEZONE="UTC" \
     PHP_SLOW_LOG="/proc/self/fd/2" \
     PHP_UPLOAD_MAX_FILESIZE="20M" \
     PHP_VARIABLES_ORDER="GPCS" \
-    XDEBUG_LOG="/var/www/html/xdebug.log"
+    PROJECT_WEBROOT="${PROJECT_ROOT}/public" \
+    XDEBUG_LOG="${PROJECT_ROOT}/xdebug.log"
 # Composer
 ENV COMPOSER_HOME="/composer" \
     PATH="/composer/vendor/bin:$PATH"
@@ -182,6 +185,6 @@ COPY ./usr /usr
 # RUN
 # Run setup and entrypoint start
 # ----------------------------------------------------------------------------------------------------------------------
-WORKDIR /var/www/html
+WORKDIR ${PROJECT_ROOT}
 
 ENTRYPOINT ["docker-entrypoint"]
