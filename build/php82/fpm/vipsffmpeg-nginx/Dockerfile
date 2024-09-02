@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.2.18-fpm
+FROM php:8.2.23-fpm
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -91,11 +91,12 @@ ENV RUN_DEPS="ca-certificates \
 # Initialization with PHP installation
 # ----------------------------------------------------------------------------------------------------------------------
 RUN apt-get update && \
+    APT_SUPERVISOR_VERSION=$(apt-cache madison supervisor | awk -v ver="4.2.5" '$3 ~ ver {print $3; exit}') && \
     apt-get install -y \
         ${BUILD_DEPS} \
         ${PECL_BUILD_DEPS} \
         ${RUN_DEPS} \
-        supervisor=4.2.5-1 && \
+        supervisor=${APT_SUPERVISOR_VERSION} && \
     docker-php-ext-configure intl && \
     docker-php-ext-configure opcache && \
     docker-php-ext-configure pcntl --enable-pcntl && \
@@ -125,7 +126,7 @@ RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.23 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.18.1 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.19.3 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.11 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.0.2 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.3.2 && \
@@ -151,7 +152,7 @@ RUN apt-get update && \
 # ----------------------------------------------------------------------------------------------------------------------
 # Php Security Checker binary package setup
 RUN wget -q \
-        https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.6/local-php-security-checker_2.0.6_linux_amd64 \
+        https://github.com/fabpot/local-php-security-checker/releases/download/v2.1.3/local-php-security-checker_linux_amd64 \
         -O /usr/local/bin/local-php-security-checker && \
     chmod +x /usr/local/bin/local-php-security-checker
 
@@ -162,18 +163,19 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.7.2
+        --version=2.7.8
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-TOOLS
 # ----------------------------------------------------------------------------------------------------------------------
-RUN DEBIAN_FRONTEND=noninteractive && \
+    RUN DEBIAN_FRONTEND=noninteractive && \
     REDIS_KEYRING=/usr/share/keyrings/redis-archive-keyring.gpg && \
     REDIS_REPO="$(lsb_release -c -s)" && \
     curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o ${REDIS_KEYRING} && \
     echo "deb [signed-by=${REDIS_KEYRING}] https://packages.redis.io/deb ${REDIS_REPO} main" > /etc/apt/sources.list.d/redis.list && \
     apt-get update && \
-    apt-get install -y redis-tools=6:7.2.4-1rl1~bookworm1 && \
+    APT_REDIS_TOOLS_VERSION=$(apt-cache madison redis-tools | awk -v ver="7.2.4" '$3 ~ ver {print $3; exit}') && \
+    apt-get install -y redis-tools=${APT_REDIS_TOOLS_VERSION} && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
@@ -238,10 +240,10 @@ RUN DEBIAN_FRONTEND=noninteractive && \
         ${VIPS_RUN_DEPS} && \
     cd /tmp && \
     wget -qc \
-        https://github.com/libvips/libvips/releases/download/v8.15.2/vips-8.15.2.tar.xz \
+        https://github.com/libvips/libvips/releases/download/v8.15.3/vips-8.15.3.tar.xz \
         -O - | \
         tar -xJ && \
-    cd vips-8.15.2 && \
+    cd vips-8.15.3 && \
     meson setup release --libdir=lib --buildtype=release && \
     cd release && \
     meson compile && \
@@ -266,17 +268,18 @@ RUN DEBIAN_FRONTEND=noninteractive && \
 # Package installation
 RUN DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
+    APT_FFMPEG_VERSION=$(apt-cache madison ffmpeg | awk -v ver="5.1.6" '$3 ~ ver {print $3; exit}') && \
     apt-get install -y \
-        ffmpeg=7:5.1.4-0+deb12u1 \
-        libavcodec59=7:5.1.4-0+deb12u1 \
-        libavdevice59=7:5.1.4-0+deb12u1 \
-        libavfilter8=7:5.1.4-0+deb12u1 \
-        libavformat59=7:5.1.4-0+deb12u1 \
-        libswresample4=7:5.1.4-0+deb12u1 \
-        libavutil57=7:5.1.4-0+deb12u1 \
-        libpostproc56=7:5.1.4-0+deb12u1 \
-        libswresample4=7:5.1.4-0+deb12u1 \
-        libswscale6=7:5.1.4-0+deb12u1 && \
+        ffmpeg=${APT_FFMPEG_VERSION} \
+        libavcodec59=${APT_FFMPEG_VERSION} \
+        libavdevice59=${APT_FFMPEG_VERSION} \
+        libavfilter8=${APT_FFMPEG_VERSION} \
+        libavformat59=${APT_FFMPEG_VERSION} \
+        libswresample4=${APT_FFMPEG_VERSION} \
+        libavutil57=${APT_FFMPEG_VERSION} \
+        libpostproc56=${APT_FFMPEG_VERSION} \
+        libswresample4=${APT_FFMPEG_VERSION} \
+        libswscale6=${APT_FFMPEG_VERSION} && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
@@ -329,12 +332,17 @@ RUN DEBIAN_FRONTEND=noninteractive && \
     curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o ${NGINX_KEYRING} && \
     echo "deb [signed-by=${NGINX_KEYRING}] http://nginx.org/packages/debian ${NGINX_REPO}" > /etc/apt/sources.list.d/nginx.list && \
     apt-get update && \
+    APT_NGINX_VERSION=$(apt-cache madison nginx | awk -v ver="1.26.2" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_GEOIP_VERSION=$(apt-cache madison nginx-module-geoip | awk -v ver="1.26.2" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_IMAGE_FILTER_VERSION=$(apt-cache madison nginx-module-image-filter | awk -v ver="1.26.2" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_NJS_VERSION=$(apt-cache madison nginx-module-njs | awk -v ver="1.26.2" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_XSLT_VERSION=$(apt-cache madison nginx-module-xslt | awk -v ver="1.26.2" '$3 ~ ver {print $3; exit}') && \
     apt-get install --no-install-recommends --no-install-suggests -y \
-        nginx=1.24.0-1~bookworm \
-        nginx-module-xslt=1.24.0-1~bookworm \
-        nginx-module-geoip=1.24.0-1~bookworm \
-        nginx-module-image-filter=1.24.0-1~bookworm \
-        nginx-module-njs=1.24.0+0.8.3-1~bookworm && \
+        nginx=${APT_NGINX_VERSION} \
+        nginx-module-geoip=${APT_NGINX_MODULE_GEOIP_VERSION} \
+        nginx-module-image-filter=${APT_NGINX_MODULE_IMAGE_FILTER_VERSION} \
+        nginx-module-njs=${APT_NGINX_MODULE_NJS_VERSION} \
+        nginx-module-xslt=${APT_NGINX_MODULE_XSLT_VERSION} && \
 # Cleanup
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

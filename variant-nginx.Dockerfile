@@ -43,12 +43,17 @@ RUN DEBIAN_FRONTEND=noninteractive && \
     curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o ${NGINX_KEYRING} && \
     echo "deb [signed-by=${NGINX_KEYRING}] http://nginx.org/packages/debian ${NGINX_REPO}" > /etc/apt/sources.list.d/nginx.list && \
     apt-get update && \
+    APT_NGINX_VERSION=$(apt-cache madison nginx | awk -v ver="${NGINX_VERSION}" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_GEOIP_VERSION=$(apt-cache madison nginx-module-geoip | awk -v ver="${NGINX_VERSION}" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_IMAGE_FILTER_VERSION=$(apt-cache madison nginx-module-image-filter | awk -v ver="${NGINX_VERSION}" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_NJS_VERSION=$(apt-cache madison nginx-module-njs | awk -v ver="${NGINX_VERSION}" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_XSLT_VERSION=$(apt-cache madison nginx-module-xslt | awk -v ver="${NGINX_VERSION}" '$3 ~ ver {print $3; exit}') && \
     apt-get install --no-install-recommends --no-install-suggests -y \
-        nginx=${NGINX_VERSION}-${NGINX_PKG_RELEASE} \
-        nginx-module-xslt=${NGINX_VERSION}-${NGINX_PKG_RELEASE} \
-        nginx-module-geoip=${NGINX_VERSION}-${NGINX_PKG_RELEASE} \
-        nginx-module-image-filter=${NGINX_VERSION}-${NGINX_PKG_RELEASE} \
-        nginx-module-njs=${NGINX_VERSION}+${NGINX_NJS_VERSION}-${NGINX_PKG_RELEASE} && \
+        nginx=${APT_NGINX_VERSION} \
+        nginx-module-geoip=${APT_NGINX_MODULE_GEOIP_VERSION} \
+        nginx-module-image-filter=${APT_NGINX_MODULE_IMAGE_FILTER_VERSION} \
+        nginx-module-njs=${APT_NGINX_MODULE_NJS_VERSION} \
+        nginx-module-xslt=${APT_NGINX_MODULE_XSLT_VERSION} && \
 # Cleanup
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

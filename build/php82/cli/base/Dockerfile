@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.2.18-cli
+FROM php:8.2.23-cli
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -91,11 +91,12 @@ ENV RUN_DEPS="ca-certificates \
 # Initialization with PHP installation
 # ----------------------------------------------------------------------------------------------------------------------
 RUN apt-get update && \
+    APT_SUPERVISOR_VERSION=$(apt-cache madison supervisor | awk -v ver="4.2.5" '$3 ~ ver {print $3; exit}') && \
     apt-get install -y \
         ${BUILD_DEPS} \
         ${PECL_BUILD_DEPS} \
         ${RUN_DEPS} \
-        supervisor=4.2.5-1 && \
+        supervisor=${APT_SUPERVISOR_VERSION} && \
     docker-php-ext-configure intl && \
     docker-php-ext-configure opcache && \
     docker-php-ext-configure pcntl --enable-pcntl && \
@@ -125,7 +126,7 @@ RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.23 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.18.1 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.19.3 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.11 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.0.2 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.3.2 && \
@@ -151,7 +152,7 @@ RUN apt-get update && \
 # ----------------------------------------------------------------------------------------------------------------------
 # Php Security Checker binary package setup
 RUN wget -q \
-        https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.6/local-php-security-checker_2.0.6_linux_amd64 \
+        https://github.com/fabpot/local-php-security-checker/releases/download/v2.1.3/local-php-security-checker_linux_amd64 \
         -O /usr/local/bin/local-php-security-checker && \
     chmod +x /usr/local/bin/local-php-security-checker
 
@@ -162,18 +163,19 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.7.2
+        --version=2.7.8
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-TOOLS
 # ----------------------------------------------------------------------------------------------------------------------
-RUN DEBIAN_FRONTEND=noninteractive && \
+    RUN DEBIAN_FRONTEND=noninteractive && \
     REDIS_KEYRING=/usr/share/keyrings/redis-archive-keyring.gpg && \
     REDIS_REPO="$(lsb_release -c -s)" && \
     curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o ${REDIS_KEYRING} && \
     echo "deb [signed-by=${REDIS_KEYRING}] https://packages.redis.io/deb ${REDIS_REPO} main" > /etc/apt/sources.list.d/redis.list && \
     apt-get update && \
-    apt-get install -y redis-tools=6:7.2.4-1rl1~bookworm1 && \
+    APT_REDIS_TOOLS_VERSION=$(apt-cache madison redis-tools | awk -v ver="7.2.4" '$3 ~ ver {print $3; exit}') && \
+    apt-get install -y redis-tools=${APT_REDIS_TOOLS_VERSION} && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*

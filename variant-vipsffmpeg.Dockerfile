@@ -85,17 +85,18 @@ RUN DEBIAN_FRONTEND=noninteractive && \
 # Package installation
 RUN DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
+    APT_FFMPEG_VERSION=$(apt-cache madison ffmpeg | awk -v ver="${FFMPEG_VERSION}" '$3 ~ ver {print $3; exit}') && \
     apt-get install -y \
-        ffmpeg=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libavcodec59=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libavdevice59=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libavfilter8=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libavformat59=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libswresample4=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libavutil57=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libpostproc56=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libswresample4=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} \
-        libswscale6=${FFMPEG_PRE_RELEASE}:${FFMPEG_VERSION}-${FFMPEG_PKG_RELEASE} && \
+        ffmpeg=${APT_FFMPEG_VERSION} \
+        libavcodec59=${APT_FFMPEG_VERSION} \
+        libavdevice59=${APT_FFMPEG_VERSION} \
+        libavfilter8=${APT_FFMPEG_VERSION} \
+        libavformat59=${APT_FFMPEG_VERSION} \
+        libswresample4=${APT_FFMPEG_VERSION} \
+        libavutil57=${APT_FFMPEG_VERSION} \
+        libpostproc56=${APT_FFMPEG_VERSION} \
+        libswresample4=${APT_FFMPEG_VERSION} \
+        libswscale6=${APT_FFMPEG_VERSION} && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*

@@ -85,11 +85,12 @@ ENV RUN_DEPS="ca-certificates \
 # Initialization with PHP installation
 # ----------------------------------------------------------------------------------------------------------------------
 RUN apt-get update && \
+    APT_SUPERVISOR_VERSION=$(apt-cache madison supervisor | awk -v ver="${SUPERVISOR_VERSION}" '$3 ~ ver {print $3; exit}') && \
     apt-get install -y \
         ${BUILD_DEPS} \
         ${PECL_BUILD_DEPS} \
         ${RUN_DEPS} \
-        supervisor=${SUPERVISOR_VERSION}-${SUPERVISOR_PKG_RELEASE} && \
+        supervisor=${APT_SUPERVISOR_VERSION} && \
     docker-php-ext-configure intl && \
     docker-php-ext-configure opcache && \
     docker-php-ext-configure pcntl --enable-pcntl && \
@@ -145,7 +146,7 @@ RUN apt-get update && \
 # ----------------------------------------------------------------------------------------------------------------------
 # Php Security Checker binary package setup
 RUN wget -q \
-        https://github.com/fabpot/local-php-security-checker/releases/download/v${PHP_SECURITY_CHECKER_VERSION}/local-php-security-checker_${PHP_SECURITY_CHECKER_VERSION}_linux_amd64 \
+        https://github.com/fabpot/local-php-security-checker/releases/download/v${PHP_SECURITY_CHECKER_VERSION}/local-php-security-checker_linux_amd64 \
         -O /usr/local/bin/local-php-security-checker && \
     chmod +x /usr/local/bin/local-php-security-checker
 
@@ -161,13 +162,14 @@ RUN curl -sS https://getcomposer.org/installer | \
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-TOOLS
 # ----------------------------------------------------------------------------------------------------------------------
-RUN DEBIAN_FRONTEND=noninteractive && \
+    RUN DEBIAN_FRONTEND=noninteractive && \
     REDIS_KEYRING=/usr/share/keyrings/redis-archive-keyring.gpg && \
     REDIS_REPO="$(lsb_release -c -s)" && \
     curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o ${REDIS_KEYRING} && \
     echo "deb [signed-by=${REDIS_KEYRING}] https://packages.redis.io/deb ${REDIS_REPO} main" > /etc/apt/sources.list.d/redis.list && \
     apt-get update && \
-    apt-get install -y redis-tools=${REDIS_PRE_RELEASE}:${REDIS_VERSION}-${REDIS_PKG_RELEASE} && \
+    APT_REDIS_TOOLS_VERSION=$(apt-cache madison redis-tools | awk -v ver="${REDIS_VERSION}" '$3 ~ ver {print $3; exit}') && \
+    apt-get install -y redis-tools=${APT_REDIS_TOOLS_VERSION} && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
