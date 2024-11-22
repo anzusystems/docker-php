@@ -4,6 +4,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # VIPS ENVIRONMENT VARIABLES
 # Packages
+ENV PHP_FFI_ENABLED=true
 ENV VIPS_BUILD_DEPS="automake \
                     build-essential \
                     libexpat1-dev \
@@ -29,6 +30,7 @@ ENV VIPS_RUN_DEPS="gobject-introspection \
                    libcfitsio-dev \
                    libcurl4-openssl-dev \
                    libexif-dev \
+                   libffi8 \
                    libfftw3-dev \
                    libfile-mimeinfo-perl \
                    libgif-dev \
@@ -36,9 +38,9 @@ ENV VIPS_RUN_DEPS="gobject-introspection \
                    libheif-dev \
                    libjpeg62-turbo \
                    libmatio11 \
-                   liborc-0.4-dev \
                    libopenexr-3-1-30 \
                    libopenslide-dev \
+                   liborc-0.4-dev \
                    libpango1.0-dev \
                    libpoppler-glib8 \
                    librsvg2-dev \
@@ -55,6 +57,9 @@ RUN DEBIAN_FRONTEND=noninteractive && \
     apt-get install -y \
         ${VIPS_BUILD_DEPS} \
         ${VIPS_RUN_DEPS} && \
+    docker-php-ext-configure ffi && \
+    docker-php-ext-install -j$(nproc) \
+        ffi && \
     cd /tmp && \
     wget -qc \
         https://github.com/libvips/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.xz \
@@ -101,6 +106,10 @@ RUN DEBIAN_FRONTEND=noninteractive && \
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
 
+# ----------------------------------------------------------------------------------------------------------------------
+# PERMISSIONS
+RUN chown "${CONFIG_OWNER_NAME}:${CONFIG_GROUP_NAME}" -R \
+        /etc/ImageMagick-6
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # VIPS FFMPEG SETUP END
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
