@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.2.23-cli
+FROM php:8.2.26-cli
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -27,6 +27,7 @@ ENV PHP_DATE_TIMEZONE="UTC" \
     PHP_ERROR_LOG="/proc/self/fd/2" \
     PHP_ERROR_REPORTING=6143 \
     PHP_EXPOSE_PHP=0 \
+    PHP_FFI_ENABLED="preload" \
     PHP_LOG_LEVEL="notice" \
     PHP_MAX_EXECUTION_TIME=30 \
     PHP_MEMORY_LIMIT="256M" \
@@ -125,10 +126,10 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.23 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.19.3 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.24 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.20.0 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.11 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.0.2 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.1.0 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.3.2 && \
     docker-php-ext-enable \
         apcu \
@@ -148,22 +149,13 @@ RUN apt-get update && \
     rm -r /var/lib/apt/lists/*
 
 # ----------------------------------------------------------------------------------------------------------------------
-# PHP SECURITY CHECKER
-# ----------------------------------------------------------------------------------------------------------------------
-# Php Security Checker binary package setup
-RUN wget -q \
-        https://github.com/fabpot/local-php-security-checker/releases/download/v2.1.3/local-php-security-checker_linux_amd64 \
-        -O /usr/local/bin/local-php-security-checker && \
-    chmod +x /usr/local/bin/local-php-security-checker
-
-# ----------------------------------------------------------------------------------------------------------------------
 # COMPOSER
 # ----------------------------------------------------------------------------------------------------------------------
 RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.7.8
+        --version=2.8.3
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-TOOLS
@@ -187,6 +179,7 @@ RUN curl -sS https://getcomposer.org/installer | \
 # ----------------------------------------------------------------------------------------------------------------------
 # VIPS ENVIRONMENT VARIABLES
 # Packages
+ENV PHP_FFI_ENABLED=true
 ENV VIPS_BUILD_DEPS="automake \
                     build-essential \
                     libexpat1-dev \
@@ -212,6 +205,7 @@ ENV VIPS_RUN_DEPS="gobject-introspection \
                    libcfitsio-dev \
                    libcurl4-openssl-dev \
                    libexif-dev \
+                   libffi8 \
                    libfftw3-dev \
                    libfile-mimeinfo-perl \
                    libgif-dev \
@@ -219,9 +213,9 @@ ENV VIPS_RUN_DEPS="gobject-introspection \
                    libheif-dev \
                    libjpeg62-turbo \
                    libmatio11 \
-                   liborc-0.4-dev \
                    libopenexr-3-1-30 \
                    libopenslide-dev \
+                   liborc-0.4-dev \
                    libpango1.0-dev \
                    libpoppler-glib8 \
                    librsvg2-dev \
@@ -238,12 +232,15 @@ RUN DEBIAN_FRONTEND=noninteractive && \
     apt-get install -y \
         ${VIPS_BUILD_DEPS} \
         ${VIPS_RUN_DEPS} && \
+    docker-php-ext-configure ffi && \
+    docker-php-ext-install -j$(nproc) \
+        ffi && \
     cd /tmp && \
     wget -qc \
-        https://github.com/libvips/libvips/releases/download/v8.15.3/vips-8.15.3.tar.xz \
+        https://github.com/libvips/libvips/releases/download/v8.16.0/vips-8.16.0.tar.xz \
         -O - | \
         tar -xJ && \
-    cd vips-8.15.3 && \
+    cd vips-8.16.0 && \
     meson setup release --libdir=lib --buildtype=release && \
     cd release && \
     meson compile && \

@@ -21,6 +21,7 @@ ENV PHP_DATE_TIMEZONE="UTC" \
     PHP_ERROR_LOG="/proc/self/fd/2" \
     PHP_ERROR_REPORTING=6143 \
     PHP_EXPOSE_PHP=0 \
+    PHP_FFI_ENABLED="preload" \
     PHP_LOG_LEVEL="notice" \
     PHP_MAX_EXECUTION_TIME=30 \
     PHP_MEMORY_LIMIT="256M" \
@@ -140,15 +141,6 @@ RUN apt-get update && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
-
-# ----------------------------------------------------------------------------------------------------------------------
-# PHP SECURITY CHECKER
-# ----------------------------------------------------------------------------------------------------------------------
-# Php Security Checker binary package setup
-RUN wget -q \
-        https://github.com/fabpot/local-php-security-checker/releases/download/v${PHP_SECURITY_CHECKER_VERSION}/local-php-security-checker_linux_amd64 \
-        -O /usr/local/bin/local-php-security-checker && \
-    chmod +x /usr/local/bin/local-php-security-checker
 
 # ----------------------------------------------------------------------------------------------------------------------
 # COMPOSER
