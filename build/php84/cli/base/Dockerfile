@@ -1,4 +1,10 @@
-FROM php:${PHP_SOURCE_TAG}
+#
+# NOTE:
+# THIS DOCKERFILE IS GENERATED VIA "update.sh".
+# PLEASE DO NOT EDIT IT DIRECTLY!
+# CHECK README FOR MORE INFO.
+#
+FROM php:8.4.3-cli
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -86,7 +92,7 @@ ENV RUN_DEPS="ca-certificates \
 # Initialization with PHP installation
 # ----------------------------------------------------------------------------------------------------------------------
 RUN apt-get update && \
-    APT_SUPERVISOR_VERSION=$(apt-cache madison supervisor | awk -v ver="${SUPERVISOR_VERSION}" '$3 ~ ver {print $3; exit}') && \
+    APT_SUPERVISOR_VERSION=$(apt-cache madison supervisor | awk -v ver="4.2.5" '$3 ~ ver {print $3; exit}') && \
     apt-get install -y \
         ${BUILD_DEPS} \
         ${PECL_BUILD_DEPS} \
@@ -120,11 +126,11 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-${PECL_APCU_VERSION} && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-${PECL_MONGODB_VERSION} && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-${PECL_PCOV_VERSION} && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-${PECL_REDIS_VERSION} && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-${PECL_XDEBUG_VERSION} && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.24 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.20.1 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.12 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.1.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.4.1 && \
     docker-php-ext-enable \
         apcu \
         mongodb \
@@ -149,7 +155,7 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=${COMPOSER_VERSION}
+        --version=2.8.4
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-TOOLS
@@ -160,7 +166,7 @@ RUN DEBIAN_FRONTEND=noninteractive && \
     curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o ${REDIS_KEYRING} && \
     echo "deb [signed-by=${REDIS_KEYRING}] https://packages.redis.io/deb ${REDIS_REPO} main" > /etc/apt/sources.list.d/redis.list && \
     apt-get update && \
-    APT_REDIS_TOOLS_VERSION=$(apt-cache madison redis-tools | awk -v ver="${REDIS_VERSION}" '$3 ~ ver {print $3; exit}') && \
+    APT_REDIS_TOOLS_VERSION=$(apt-cache madison redis-tools | awk -v ver="7.2.4" '$3 ~ ver {print $3; exit}') && \
     apt-get install -y redis-tools=${APT_REDIS_TOOLS_VERSION} && \
 # Cleanup
     apt-get clean && \

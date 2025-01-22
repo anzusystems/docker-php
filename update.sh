@@ -12,8 +12,8 @@ TMP_FINAL_DOCKERFILE_FILE="/tmp/php_tmp_final_variant_Dockerfile"
 
 declare -A VERSION_LIST
 VERSION_LIST=(
-    [8.2]="${PHP82_VERSION}"
     [8.3]="${PHP83_VERSION}"
+    [8.4]="${PHP84_VERSION}"
 )
 
 declare -A VARIANTS_LIST
