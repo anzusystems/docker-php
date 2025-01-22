@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.3.16-fpm
+FROM php:8.4.3-fpm
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
