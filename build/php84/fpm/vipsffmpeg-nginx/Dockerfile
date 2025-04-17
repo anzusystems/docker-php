@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.4.3-fpm
+FROM php:8.4.6-fpm
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -127,10 +127,10 @@ RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.24 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-1.20.1 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-2.0.0 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.12 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.1.0 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.4.1 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.2.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.4.2 && \
     docker-php-ext-enable \
         apcu \
         mongodb \
@@ -155,7 +155,7 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.8.4
+        --version=2.8.8
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-TOOLS
@@ -237,10 +237,10 @@ RUN DEBIAN_FRONTEND=noninteractive && \
         ffi && \
     cd /tmp && \
     wget -qc \
-        https://github.com/libvips/libvips/releases/download/v8.16.0/vips-8.16.0.tar.xz \
+        https://github.com/libvips/libvips/releases/download/v8.16.1/vips-8.16.1.tar.xz \
         -O - | \
         tar -xJ && \
-    cd vips-8.16.0 && \
+    cd vips-8.16.1 && \
     meson setup release --libdir=lib --buildtype=release && \
     cd release && \
     meson compile && \
@@ -329,11 +329,11 @@ RUN DEBIAN_FRONTEND=noninteractive && \
     curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o ${NGINX_KEYRING} && \
     echo "deb [signed-by=${NGINX_KEYRING}] http://nginx.org/packages/debian ${NGINX_REPO}" > /etc/apt/sources.list.d/nginx.list && \
     apt-get update && \
-    APT_NGINX_VERSION=$(apt-cache madison nginx | awk -v ver="1.26.2" '$3 ~ ver {print $3; exit}') && \
-    APT_NGINX_MODULE_GEOIP_VERSION=$(apt-cache madison nginx-module-geoip | awk -v ver="1.26.2" '$3 ~ ver {print $3; exit}') && \
-    APT_NGINX_MODULE_IMAGE_FILTER_VERSION=$(apt-cache madison nginx-module-image-filter | awk -v ver="1.26.2" '$3 ~ ver {print $3; exit}') && \
-    APT_NGINX_MODULE_NJS_VERSION=$(apt-cache madison nginx-module-njs | awk -v ver="1.26.2" '$3 ~ ver {print $3; exit}') && \
-    APT_NGINX_MODULE_XSLT_VERSION=$(apt-cache madison nginx-module-xslt | awk -v ver="1.26.2" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_VERSION=$(apt-cache madison nginx | awk -v ver="1.26.3" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_GEOIP_VERSION=$(apt-cache madison nginx-module-geoip | awk -v ver="1.26.3" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_IMAGE_FILTER_VERSION=$(apt-cache madison nginx-module-image-filter | awk -v ver="1.26.3" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_NJS_VERSION=$(apt-cache madison nginx-module-njs | awk -v ver="1.26.3" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_XSLT_VERSION=$(apt-cache madison nginx-module-xslt | awk -v ver="1.26.3" '$3 ~ ver {print $3; exit}') && \
     apt-get install --no-install-recommends --no-install-suggests -y \
         nginx=${APT_NGINX_VERSION} \
         nginx-module-geoip=${APT_NGINX_MODULE_GEOIP_VERSION} \
