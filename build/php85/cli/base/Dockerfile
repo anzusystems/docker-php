@@ -70,6 +70,7 @@ ENV RUN_DEPS="ca-certificates \
               git \
               gnupg \
               less \
+              libicu76 \
               libpng-dev \
               libjpeg62-turbo \
               libzip5 \
@@ -109,6 +110,11 @@ RUN apt-get update && \
         pcntl \
         pdo_mysql \
         zip && \
+    # Install opcache only for PHP < 8.5 (bundled in 8.5+)
+    if dpkg --compare-versions "${PHP_VERSION}" lt "8.5"; then \
+        docker-php-ext-configure opcache && \
+        docker-php-ext-install -j$(nproc) opcache; \
+    fi && \
     apt-get purge \
         -y --auto-remove \
         -o APT::AutoRemove::RecommendsImportant=false \
