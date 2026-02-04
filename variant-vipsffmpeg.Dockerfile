@@ -37,7 +37,7 @@ ENV VIPS_RUN_DEPS="gobject-introspection \
                    libgsf-1-114 \
                    libheif-dev \
                    libjpeg62-turbo \
-                   libmatio11 \
+                   libmatio13 \
                    libopenexr-3-1-30 \
                    libopenslide-dev \
                    liborc-0.4-dev \
@@ -93,15 +93,15 @@ RUN DEBIAN_FRONTEND=noninteractive && \
     APT_FFMPEG_VERSION=$(apt-cache madison ffmpeg | awk -v ver="${FFMPEG_VERSION}" '$3 ~ ver {print $3; exit}') && \
     apt-get install -y \
         ffmpeg=${APT_FFMPEG_VERSION} \
-        libavcodec59=${APT_FFMPEG_VERSION} \
-        libavdevice59=${APT_FFMPEG_VERSION} \
-        libavfilter8=${APT_FFMPEG_VERSION} \
-        libavformat59=${APT_FFMPEG_VERSION} \
-        libswresample4=${APT_FFMPEG_VERSION} \
-        libavutil57=${APT_FFMPEG_VERSION} \
-        libpostproc56=${APT_FFMPEG_VERSION} \
-        libswresample4=${APT_FFMPEG_VERSION} \
-        libswscale6=${APT_FFMPEG_VERSION} && \
+        libavcodec61=${APT_FFMPEG_VERSION} \
+        libavdevice61=${APT_FFMPEG_VERSION} \
+        libavfilter10=${APT_FFMPEG_VERSION} \
+        libavformat61=${APT_FFMPEG_VERSION} \
+        libswresample5=${APT_FFMPEG_VERSION} \
+        libavutil59=${APT_FFMPEG_VERSION} \
+        libpostproc58=${APT_FFMPEG_VERSION} \
+        libswresample5=${APT_FFMPEG_VERSION} \
+        libswscale8=${APT_FFMPEG_VERSION} && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*

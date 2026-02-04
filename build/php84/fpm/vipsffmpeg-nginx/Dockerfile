@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.4.6-fpm
+FROM php:8.4.17-fpm-trixie
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -72,7 +72,7 @@ ENV RUN_DEPS="ca-certificates \
               less \
               libpng-dev \
               libjpeg62-turbo \
-              libzip4 \
+              libzip5 \
               logrotate \
               lsb-release \
               lsof \
@@ -98,14 +98,14 @@ RUN apt-get update && \
         ${PECL_BUILD_DEPS} \
         ${RUN_DEPS} \
         supervisor=${APT_SUPERVISOR_VERSION} && \
+    docker-php-ext-configure bcmath && \
     docker-php-ext-configure intl && \
-    docker-php-ext-configure opcache && \
     docker-php-ext-configure pcntl --enable-pcntl && \
     docker-php-ext-configure pdo_mysql && \
     docker-php-ext-configure zip && \
     docker-php-ext-install -j$(nproc) \
+        bcmath \
         intl \
-        opcache \
         pcntl \
         pdo_mysql \
         zip && \
@@ -126,11 +126,11 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.24 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-2.0.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.28 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-2.1.4 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.12 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.2.0 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.4.2 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.3.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.5.0 && \
     docker-php-ext-enable \
         apcu \
         mongodb \
@@ -155,14 +155,14 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.8.8
+        --version=2.9.4
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-TOOLS
 # ----------------------------------------------------------------------------------------------------------------------
 RUN DEBIAN_FRONTEND=noninteractive && \
     REDIS_KEYRING=/usr/share/keyrings/redis-archive-keyring.gpg && \
-    REDIS_REPO="$(lsb_release -c -s)" && \
+    REDIS_REPO="bookworm" && \
     curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o ${REDIS_KEYRING} && \
     echo "deb [signed-by=${REDIS_KEYRING}] https://packages.redis.io/deb ${REDIS_REPO} main" > /etc/apt/sources.list.d/redis.list && \
     apt-get update && \
@@ -212,7 +212,7 @@ ENV VIPS_RUN_DEPS="gobject-introspection \
                    libgsf-1-114 \
                    libheif-dev \
                    libjpeg62-turbo \
-                   libmatio11 \
+                   libmatio13 \
                    libopenexr-3-1-30 \
                    libopenslide-dev \
                    liborc-0.4-dev \
@@ -237,10 +237,10 @@ RUN DEBIAN_FRONTEND=noninteractive && \
         ffi && \
     cd /tmp && \
     wget -qc \
-        https://github.com/libvips/libvips/releases/download/v8.16.1/vips-8.16.1.tar.xz \
+        https://github.com/libvips/libvips/releases/download/v8.18.0/vips-8.18.0.tar.xz \
         -O - | \
         tar -xJ && \
-    cd vips-8.16.1 && \
+    cd vips-8.18.0 && \
     meson setup release --libdir=lib --buildtype=release && \
     cd release && \
     meson compile && \
@@ -265,18 +265,18 @@ RUN DEBIAN_FRONTEND=noninteractive && \
 # Package installation
 RUN DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    APT_FFMPEG_VERSION=$(apt-cache madison ffmpeg | awk -v ver="5.1.6" '$3 ~ ver {print $3; exit}') && \
+    APT_FFMPEG_VERSION=$(apt-cache madison ffmpeg | awk -v ver="7.1.3" '$3 ~ ver {print $3; exit}') && \
     apt-get install -y \
         ffmpeg=${APT_FFMPEG_VERSION} \
-        libavcodec59=${APT_FFMPEG_VERSION} \
-        libavdevice59=${APT_FFMPEG_VERSION} \
-        libavfilter8=${APT_FFMPEG_VERSION} \
-        libavformat59=${APT_FFMPEG_VERSION} \
-        libswresample4=${APT_FFMPEG_VERSION} \
-        libavutil57=${APT_FFMPEG_VERSION} \
-        libpostproc56=${APT_FFMPEG_VERSION} \
-        libswresample4=${APT_FFMPEG_VERSION} \
-        libswscale6=${APT_FFMPEG_VERSION} && \
+        libavcodec61=${APT_FFMPEG_VERSION} \
+        libavdevice61=${APT_FFMPEG_VERSION} \
+        libavfilter10=${APT_FFMPEG_VERSION} \
+        libavformat61=${APT_FFMPEG_VERSION} \
+        libswresample5=${APT_FFMPEG_VERSION} \
+        libavutil59=${APT_FFMPEG_VERSION} \
+        libpostproc58=${APT_FFMPEG_VERSION} \
+        libswresample5=${APT_FFMPEG_VERSION} \
+        libswscale8=${APT_FFMPEG_VERSION} && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
@@ -329,11 +329,11 @@ RUN DEBIAN_FRONTEND=noninteractive && \
     curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o ${NGINX_KEYRING} && \
     echo "deb [signed-by=${NGINX_KEYRING}] http://nginx.org/packages/debian ${NGINX_REPO}" > /etc/apt/sources.list.d/nginx.list && \
     apt-get update && \
-    APT_NGINX_VERSION=$(apt-cache madison nginx | awk -v ver="1.26.3" '$3 ~ ver {print $3; exit}') && \
-    APT_NGINX_MODULE_GEOIP_VERSION=$(apt-cache madison nginx-module-geoip | awk -v ver="1.26.3" '$3 ~ ver {print $3; exit}') && \
-    APT_NGINX_MODULE_IMAGE_FILTER_VERSION=$(apt-cache madison nginx-module-image-filter | awk -v ver="1.26.3" '$3 ~ ver {print $3; exit}') && \
-    APT_NGINX_MODULE_NJS_VERSION=$(apt-cache madison nginx-module-njs | awk -v ver="1.26.3" '$3 ~ ver {print $3; exit}') && \
-    APT_NGINX_MODULE_XSLT_VERSION=$(apt-cache madison nginx-module-xslt | awk -v ver="1.26.3" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_VERSION=$(apt-cache madison nginx | awk -v ver="1.28.1" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_GEOIP_VERSION=$(apt-cache madison nginx-module-geoip | awk -v ver="1.28.1" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_IMAGE_FILTER_VERSION=$(apt-cache madison nginx-module-image-filter | awk -v ver="1.28.1" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_NJS_VERSION=$(apt-cache madison nginx-module-njs | awk -v ver="1.28.1" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_XSLT_VERSION=$(apt-cache madison nginx-module-xslt | awk -v ver="1.28.1" '$3 ~ ver {print $3; exit}') && \
     apt-get install --no-install-recommends --no-install-suggests -y \
         nginx=${APT_NGINX_VERSION} \
         nginx-module-geoip=${APT_NGINX_MODULE_GEOIP_VERSION} \

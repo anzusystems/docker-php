@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.3.20-cli
+FROM php:8.5.2-fpm-trixie
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -72,7 +72,7 @@ ENV RUN_DEPS="ca-certificates \
               less \
               libpng-dev \
               libjpeg62-turbo \
-              libzip4 \
+              libzip5 \
               logrotate \
               lsb-release \
               lsof \
@@ -98,14 +98,14 @@ RUN apt-get update && \
         ${PECL_BUILD_DEPS} \
         ${RUN_DEPS} \
         supervisor=${APT_SUPERVISOR_VERSION} && \
+    docker-php-ext-configure bcmath && \
     docker-php-ext-configure intl && \
-    docker-php-ext-configure opcache && \
     docker-php-ext-configure pcntl --enable-pcntl && \
     docker-php-ext-configure pdo_mysql && \
     docker-php-ext-configure zip && \
     docker-php-ext-install -j$(nproc) \
+        bcmath \
         intl \
-        opcache \
         pcntl \
         pdo_mysql \
         zip && \
@@ -126,11 +126,11 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.24 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-2.0.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.28 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-2.1.4 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.12 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.2.0 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.4.2 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.3.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.5.0 && \
     docker-php-ext-enable \
         apcu \
         mongodb \
@@ -155,14 +155,14 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.8.8
+        --version=2.9.4
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-TOOLS
 # ----------------------------------------------------------------------------------------------------------------------
 RUN DEBIAN_FRONTEND=noninteractive && \
     REDIS_KEYRING=/usr/share/keyrings/redis-archive-keyring.gpg && \
-    REDIS_REPO="$(lsb_release -c -s)" && \
+    REDIS_REPO="bookworm" && \
     curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o ${REDIS_KEYRING} && \
     echo "deb [signed-by=${REDIS_KEYRING}] https://packages.redis.io/deb ${REDIS_REPO} main" > /etc/apt/sources.list.d/redis.list && \
     apt-get update && \
@@ -212,7 +212,7 @@ ENV VIPS_RUN_DEPS="gobject-introspection \
                    libgsf-1-114 \
                    libheif-dev \
                    libjpeg62-turbo \
-                   libmatio11 \
+                   libmatio13 \
                    libopenexr-3-1-30 \
                    libopenslide-dev \
                    liborc-0.4-dev \
@@ -237,10 +237,10 @@ RUN DEBIAN_FRONTEND=noninteractive && \
         ffi && \
     cd /tmp && \
     wget -qc \
-        https://github.com/libvips/libvips/releases/download/v8.16.1/vips-8.16.1.tar.xz \
+        https://github.com/libvips/libvips/releases/download/v8.18.0/vips-8.18.0.tar.xz \
         -O - | \
         tar -xJ && \
-    cd vips-8.16.1 && \
+    cd vips-8.18.0 && \
     meson setup release --libdir=lib --buildtype=release && \
     cd release && \
     meson compile && \
@@ -265,24 +265,92 @@ RUN DEBIAN_FRONTEND=noninteractive && \
 # Package installation
 RUN DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    APT_FFMPEG_VERSION=$(apt-cache madison ffmpeg | awk -v ver="5.1.6" '$3 ~ ver {print $3; exit}') && \
+    APT_FFMPEG_VERSION=$(apt-cache madison ffmpeg | awk -v ver="7.1.3" '$3 ~ ver {print $3; exit}') && \
     apt-get install -y \
         ffmpeg=${APT_FFMPEG_VERSION} \
-        libavcodec59=${APT_FFMPEG_VERSION} \
-        libavdevice59=${APT_FFMPEG_VERSION} \
-        libavfilter8=${APT_FFMPEG_VERSION} \
-        libavformat59=${APT_FFMPEG_VERSION} \
-        libswresample4=${APT_FFMPEG_VERSION} \
-        libavutil57=${APT_FFMPEG_VERSION} \
-        libpostproc56=${APT_FFMPEG_VERSION} \
-        libswresample4=${APT_FFMPEG_VERSION} \
-        libswscale6=${APT_FFMPEG_VERSION} && \
+        libavcodec61=${APT_FFMPEG_VERSION} \
+        libavdevice61=${APT_FFMPEG_VERSION} \
+        libavfilter10=${APT_FFMPEG_VERSION} \
+        libavformat61=${APT_FFMPEG_VERSION} \
+        libswresample5=${APT_FFMPEG_VERSION} \
+        libavutil59=${APT_FFMPEG_VERSION} \
+        libpostproc58=${APT_FFMPEG_VERSION} \
+        libswresample5=${APT_FFMPEG_VERSION} \
+        libswscale8=${APT_FFMPEG_VERSION} && \
 # Cleanup
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # VIPS FFMPEG SETUP END
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# NGINX SETUP START
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ----------------------------------------------------------------------------------------------------------------------
+# NGINX ENVIRONMENT VARIABLES
+ENV NGINX_ACCESS_CONTROL_ALLOW_HEADERS="Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-App-Version" \
+    NGINX_ACCESS_LOG="/var/log/nginx/access.log main" \
+    NGINX_ALLOWED_ORIGINS_REGEX="^https?://.*" \
+    NGINX_CLIENT_BODY_BUFFER_SIZE=16k \
+    NGINX_CLIENT_MAX_BODY_SIZE=1m \
+    NGINX_CORS_CONFIG=true \
+    NGINX_ERROR_LOG="/var/log/nginx/error.log warn" \
+    NGINX_KEEPALIVE_REQUESTS=10000 \
+    NGINX_KEEPALIVE_TIMEOUT=650 \
+    NGINX_LARGE_CLIENT_HEADER_BUFFERS_SIZE=16k \
+    NGINX_PHP_404_LOCATION_REGEX="\.php$" \
+    NGINX_PHP_ACCESS_CONTROL_MAX_AGE=1728000 \
+    NGINX_PHP_FASTCGI_BUFFER_SIZE=32K \
+    NGINX_PHP_FASTCGI_CONNECT_TIMEOUT="60s" \
+    NGINX_PHP_FASTCGI_READ_TIMEOUT="60s" \
+    NGINX_PHP_FASTCGI_SEND_TIMEOUT="60s" \
+    NGINX_PHP_FASTCGI_SPLIT_PATH_INFO="^(.+\.php)(/.*)$" \
+    NGINX_PHP_LOCATION_REGEX="^/index\.php(/|$)" \
+    NGINX_PHP_STRICT_TRANSPORT_SECURITY="max-age=31536000" \
+    NGINX_PHP_X_ROBOTS_TAG="noindex, nofollow, noarchive, nosnippet" \
+    NGINX_PORT=8080 \
+    NGINX_SERVER_TOKENS="off" \
+    NGINX_STATIC_ALLOWED_ORIGINS_REGEX="^https?://.*" \
+    NGINX_STATIC_CACHE_CONTROL_HEADER="public, max-age=31557600, s-maxage=31557600" \
+    NGINX_STATIC_LOCATION_REGEX="\.(gif|ico|css|js|svg|png|jpg|jpeg|bmp|eot|webp|woff|woff2|ttf|otf)$" \
+    NGINX_STATIC_X_ROBOTS_TAG="noindex, nofollow, noarchive, nosnippet" \
+    NGINX_WORKER_CONNECTIONS=1024 \
+    NGINX_WORKER_PROCESSES=1 \
+    NGINX_WORKER_RLIMIT_NOFILE=65535 \
+    NGINX_X_CONTENT_TYPE_OPTIONS="nosniff" \
+    NGINX_X_XSS_PROTECTION="1; mode=block"
+
+# ----------------------------------------------------------------------------------------------------------------------
+# NGINX
+RUN DEBIAN_FRONTEND=noninteractive && \
+    NGINX_KEYRING=/usr/share/keyrings/nginx-archive-keyring.gpg && \
+    NGINX_REPO="$(lsb_release -c -s) nginx" && \
+    curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o ${NGINX_KEYRING} && \
+    echo "deb [signed-by=${NGINX_KEYRING}] http://nginx.org/packages/debian ${NGINX_REPO}" > /etc/apt/sources.list.d/nginx.list && \
+    apt-get update && \
+    APT_NGINX_VERSION=$(apt-cache madison nginx | awk -v ver="1.28.1" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_GEOIP_VERSION=$(apt-cache madison nginx-module-geoip | awk -v ver="1.28.1" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_IMAGE_FILTER_VERSION=$(apt-cache madison nginx-module-image-filter | awk -v ver="1.28.1" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_NJS_VERSION=$(apt-cache madison nginx-module-njs | awk -v ver="1.28.1" '$3 ~ ver {print $3; exit}') && \
+    APT_NGINX_MODULE_XSLT_VERSION=$(apt-cache madison nginx-module-xslt | awk -v ver="1.28.1" '$3 ~ ver {print $3; exit}') && \
+    apt-get install --no-install-recommends --no-install-suggests -y \
+        nginx=${APT_NGINX_VERSION} \
+        nginx-module-geoip=${APT_NGINX_MODULE_GEOIP_VERSION} \
+        nginx-module-image-filter=${APT_NGINX_MODULE_IMAGE_FILTER_VERSION} \
+        nginx-module-njs=${APT_NGINX_MODULE_NJS_VERSION} \
+        nginx-module-xslt=${APT_NGINX_MODULE_XSLT_VERSION} && \
+# Cleanup
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# ----------------------------------------------------------------------------------------------------------------------
+# NGINX LOGGING AND USER SETUP
+# Create PID folders and forward nginx logs to docker log collector
+RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
+    ln -sf /dev/stderr /var/log/nginx/error.log
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# NGINX SETUP END
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ##</autogenerated>##
 

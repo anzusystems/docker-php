@@ -9,11 +9,12 @@ DEFAULT_IFS=${IFS}
 TEMPLATE_DOCKERFILE=template.Dockerfile
 TMP_DOCKERFILE_FILE="/tmp/php_tmp_variant_Dockerfile"
 TMP_FINAL_DOCKERFILE_FILE="/tmp/php_tmp_final_variant_Dockerfile"
+DEBIAN_RELEASE=trixie
 
 declare -A VERSION_LIST
 VERSION_LIST=(
-    [8.3]="${PHP83_VERSION}"
     [8.4]="${PHP84_VERSION}"
+    [8.5]="${PHP85_VERSION}"
 )
 
 declare -A VARIANTS_LIST
@@ -23,7 +24,7 @@ VARIANTS_LIST=(
 )
 
 # Get all parameter names to replace in Dockerfile
-REPLACE_PARAMETERS=$(sed <versions.conf -e '/^#/d' -e '/^$/d' -e 's/export \(.*\)=.*/$\1/g' | tr '\n' ':'):\$PHP_SOURCE_TAG
+REPLACE_PARAMETERS=$(sed <versions.conf -e '/^#/d' -e '/^$/d' -e 's/export \(.*\)=.*/$\1/g' | tr '\n' ':'):\$PHP_SOURCE_TAG:\$DEBIAN_RELEASE
 
 rm -rf build
 
@@ -63,6 +64,7 @@ for version in "${VERSION_TAGS[@]}"; do
             done
             IFS=${DEFAULT_IFS}
             # Variables
+            export DEBIAN_RELEASE
             export PHP_VERSION_TAG
             export VARIANT
             export BUILD_DIR="build/${PHP_VERSION_TAG}/${PHP_VARIANT}/${VARIANT}"

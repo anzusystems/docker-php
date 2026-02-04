@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.4.6-cli
+FROM php:8.4.17-cli-trixie
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -72,7 +72,7 @@ ENV RUN_DEPS="ca-certificates \
               less \
               libpng-dev \
               libjpeg62-turbo \
-              libzip4 \
+              libzip5 \
               logrotate \
               lsb-release \
               lsof \
@@ -98,14 +98,14 @@ RUN apt-get update && \
         ${PECL_BUILD_DEPS} \
         ${RUN_DEPS} \
         supervisor=${APT_SUPERVISOR_VERSION} && \
+    docker-php-ext-configure bcmath && \
     docker-php-ext-configure intl && \
-    docker-php-ext-configure opcache && \
     docker-php-ext-configure pcntl --enable-pcntl && \
     docker-php-ext-configure pdo_mysql && \
     docker-php-ext-configure zip && \
     docker-php-ext-install -j$(nproc) \
+        bcmath \
         intl \
-        opcache \
         pcntl \
         pdo_mysql \
         zip && \
@@ -126,11 +126,11 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.24 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-2.0.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.28 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-2.1.4 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.12 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.2.0 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.4.2 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.3.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.5.0 && \
     docker-php-ext-enable \
         apcu \
         mongodb \
@@ -155,14 +155,14 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.8.8
+        --version=2.9.4
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-TOOLS
 # ----------------------------------------------------------------------------------------------------------------------
 RUN DEBIAN_FRONTEND=noninteractive && \
     REDIS_KEYRING=/usr/share/keyrings/redis-archive-keyring.gpg && \
-    REDIS_REPO="$(lsb_release -c -s)" && \
+    REDIS_REPO="bookworm" && \
     curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o ${REDIS_KEYRING} && \
     echo "deb [signed-by=${REDIS_KEYRING}] https://packages.redis.io/deb ${REDIS_REPO} main" > /etc/apt/sources.list.d/redis.list && \
     apt-get update && \
