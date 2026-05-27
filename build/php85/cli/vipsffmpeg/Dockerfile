@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.5.2-cli-trixie
+FROM php:8.5.6-cli-trixie
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -133,10 +133,10 @@ RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.28 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-2.1.4 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-2.3.3 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.12 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.3.0 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.5.0 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.5.1 && \
     docker-php-ext-enable \
         apcu \
         mongodb \
@@ -161,7 +161,7 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.9.4
+        --version=2.9.8
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-TOOLS
@@ -243,10 +243,10 @@ RUN DEBIAN_FRONTEND=noninteractive && \
         ffi && \
     cd /tmp && \
     wget -qc \
-        https://github.com/libvips/libvips/releases/download/v8.18.0/vips-8.18.0.tar.xz \
+        https://github.com/libvips/libvips/releases/download/v8.18.2/vips-8.18.2.tar.xz \
         -O - | \
         tar -xJ && \
-    cd vips-8.18.0 && \
+    cd vips-8.18.2 && \
     meson setup release --libdir=lib --buildtype=release && \
     cd release && \
     meson compile && \
@@ -271,7 +271,7 @@ RUN DEBIAN_FRONTEND=noninteractive && \
 # Package installation
 RUN DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    APT_FFMPEG_VERSION=$(apt-cache madison ffmpeg | awk -v ver="7.1.3" '$3 ~ ver {print $3; exit}') && \
+    APT_FFMPEG_VERSION=$(apt-cache madison ffmpeg | awk -v ver="7.1.4" '$3 ~ ver {print $3; exit}') && \
     apt-get install -y \
         ffmpeg=${APT_FFMPEG_VERSION} \
         libavcodec61=${APT_FFMPEG_VERSION} \
