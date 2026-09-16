@@ -1,12 +1,18 @@
 #!/bin/bash
-# Cron script wrapper used to run command with multiple options
+# Cron script wrapper to run command with multiple options
 set -euo pipefail
 
+if [ -f /etc/environment.app ]; then
+    # shellcheck source=/dev/null
+    source /etc/environment.app
+fi
+
 CRON_LOG_LEVEL="${CRON_LOG_LEVEL:-warn}"
-CRON_LOG_DIR="${CRON_LOG_DIR:-${PROJECT_ROOT:-/var/www/html}/var/log}"
+CRON_LOG_DIR="${CRON_LOG_DIR:-"${PROJECT_ROOT:-/var/www/html}/var/log"}"
 
 ARGS=$*
 COMMAND_NAME=""
+CURRENT_DEPLOY_ENV="${APP_DEPLOY_ENV:-${DEPLOY_ENV:-}}"
 MAIN_CRON_LOG_FILE="/var/log/cron/cron.log"
 FIRST_RUN=true
 LOCK_FILE_ENABLED=false
@@ -123,7 +129,7 @@ function execute() {
             _info ""
         } >>"${CRON_LOG_FILE}" 2>&1
 
-        ((time_count++))
+        _=$((time_count++))
         FIRST_RUN=false
     done
 }
@@ -140,47 +146,38 @@ function execute() {
         -l | --lock)
             LOCK_FILE_ENABLED=true
             shift 1
-            continue
             ;;
         -ls | --logrotate-suffix)
             LOGROTATE_SUFFIX="_$2"
             shift 2
-            continue
             ;;
         -ls=* | --logrotate-suffix=*)
             LOGROTATE_SUFFIX="_${1#*=}"
             shift 1
-            continue
             ;;
         -lfs | --lockfile-suffix)
             LOCK_FILE_SUFFIX="_$2"
             shift 2
-            continue
             ;;
         -lfs=* | --lockfile-suffix=*)
             LOCK_FILE_SUFFIX="_${1#*=}"
             shift 1
-            continue
             ;;
         -n | --name)
             COMMAND_NAME=$2
             shift 2
-            continue
             ;;
         -n=* | --name=*)
             COMMAND_NAME="${1#*=}"
             shift 1
-            continue
             ;;
         -re | --run-env)
             RUN_ENV=$2
             shift 2
-            continue
             ;;
         -re=* | --run-env=*)
             RUN_ENV="${1#*=}"
             shift 1
-            continue
             ;;
         -s | --sleep)
             SLEEP=$2
@@ -190,7 +187,6 @@ function execute() {
                 exit 1
             fi
             shift 2
-            continue
             ;;
         -s=* | --sleep=*)
             SLEEP="${1#*=}"
@@ -200,7 +196,6 @@ function execute() {
                 exit 1
             fi
             shift 1
-            continue
             ;;
         -ti | --time-interval)
             TIME_INTERVAL=$2
@@ -210,7 +205,6 @@ function execute() {
                 exit 1
             fi
             shift 2
-            continue
             ;;
         -ti=* | --time-interval=*)
             TIME_INTERVAL="${1#*=}"
@@ -220,14 +214,12 @@ function execute() {
                 exit 1
             fi
             shift 1
-            continue
             ;;
         -h | --help)
             help
             exit
             ;;
         *)
-            continue
             ;;
         esac
     done
@@ -239,7 +231,8 @@ function execute() {
     fi
 
     # Run the command only on selected environment
-    if [ -n "${RUN_ENV}" ] && [[ ! ${RUN_ENV} =~ ${DEPLOY_ENV} ]]; then
+    if [ -n "${RUN_ENV}" ] && [[ ! ${RUN_ENV} =~ ${CURRENT_DEPLOY_ENV} ]]; then
+        _debug "Skipping command because the selected environment is \"${RUN_ENV}\" and the current environment is \"${CURRENT_DEPLOY_ENV}\"."
         exit
     fi
 

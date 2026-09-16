@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY!
 # CHECK README FOR MORE INFO.
 #
-FROM php:8.4.21-cli-trixie
+FROM php:8.4.25-cli-trixie
 
 LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 
@@ -14,7 +14,8 @@ LABEL maintainer="Lubomir Stanko <lubomir.stanko@petitpress.sk>"
 # Building envs
 ENV MAKEFLAGS="-j4"
 # Common envs
-ENV PROJECT_ROOT="/var/www/html"
+ENV DOCKER_APP_EXCLUDED_ENV_VARS="HOME|LOGNAME|OLDPWD|PWD|SHELL|SHLVL|TERM" \
+    PROJECT_ROOT="/var/www/html"
 # Php
 # Php error reporting constants https://www.php.net/manual/en/errorfunc.constants.php
 # Calculate the number for config on https://maximivanov.github.io/php-error-reporting-calculator/
@@ -22,6 +23,7 @@ ENV PROJECT_ROOT="/var/www/html"
 ENV PHP_DATE_TIMEZONE="UTC" \
     PHP_ACCESS_LOG_FORMAT="%R - %u %t \"%m %r\" %s path:%{REQUEST_URI}e pid:%p took:%ds mem:%{mega}Mmb cpu:%C%% status:%s {%{REMOTE_ADDR}e|%{HTTP_USER_AGENT}e}" \
     PHP_ACCESS_LOG="/proc/self/fd/2" \
+    PHP_CURL_CAINFO="" \
     PHP_DISPLAY_ERRORS=0 \
     PHP_DISPLAY_STARTUP_ERRORS=0 \
     PHP_ERROR_LOG="/proc/self/fd/2" \
@@ -30,17 +32,30 @@ ENV PHP_DATE_TIMEZONE="UTC" \
     PHP_FFI_ENABLED="preload" \
     PHP_LOG_LEVEL="notice" \
     PHP_MAX_EXECUTION_TIME=30 \
+    PHP_MAX_INPUT_VARS=1000 \
+    PHP_MAX_MEMORY_LIMIT=-1 \
     PHP_MEMORY_LIMIT="256M" \
     PHP_OPCACHE_CLI_ENABLE=0 \
     PHP_OPCACHE_ENABLE=1 \
     PHP_OPCACHE_ERROR_LOG="/proc/self/fd/2" \
     PHP_OPCACHE_INTERNED_STRINGS_BUFFER=32 \
+    PHP_OPCACHE_JIT_BUFFER_SIZE=0 \
     PHP_OPCACHE_LOG_VERBOSITY_LEVEL=1 \
     PHP_OPCACHE_MAX_ACCELERATED_FILES=32531 \
     PHP_OPCACHE_MEMORY_CONSUMPTION=256 \
     PHP_OPCACHE_PRELOAD_PATH="" \
-    PHP_OPCACHE_VALIDATE_TIMESTAMPS=0 \
-    PHP_POST_MAX_SIZE="0M"\
+    PHP_OPCACHE_VALIDATE_TIMESTAMPS=1 \
+    PHP_OPENSSL_CAFILE="" \
+    PHP_OPENSSL_CAPATH="" \
+    PHP_PM_MAX_CHILDREN=5 \
+    PHP_PM_MAX_REQUESTS=0 \
+    PHP_PM_MAX_SPARE_SERVERS=3 \
+    PHP_PM_MAX_SPAWN_RATE=32 \
+    PHP_PM_MIN_SPARE_SERVERS=1 \
+    PHP_PM_START_SERVERS=2 \
+    PHP_POST_MAX_SIZE="0M" \
+    PHP_REGISTER_ARGC_ARGV=0 \
+    PHP_SESSION_COOKIE_PARTITIONED=0 \
     PHP_SESSION_COOKIE_SAMESITE="" \
     PHP_SESSION_COOKIE_SECURE="" \
     PHP_SESSION_SAVE_HANDLER="files" \
@@ -48,6 +63,7 @@ ENV PHP_DATE_TIMEZONE="UTC" \
     PHP_SLOW_LOG="/proc/self/fd/2" \
     PHP_UPLOAD_MAX_FILESIZE="20M" \
     PHP_VARIABLES_ORDER="GPCS" \
+    PHP_ZEND_MAX_ALLOWED_STACK_SIZE=0 \
     PROJECT_WEBROOT="${PROJECT_ROOT}/public" \
     XDEBUG_LOG="${PROJECT_ROOT}/xdebug.log"
 # Composer
@@ -133,10 +149,10 @@ RUN apt-get update && \
     apt-get install -y \
         ${PECL_BUILD_DEPS} && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install apcu-5.1.28 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-2.3.3 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install mongodb-2.5.2 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install pcov-1.0.12 && \
     yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install redis-6.3.0 && \
-    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.5.1 && \
+    yes '' | MAKEFLAGS="-j$(($(nproc)+2))" pecl install xdebug-3.5.3 && \
     docker-php-ext-enable \
         apcu \
         mongodb \
@@ -161,7 +177,7 @@ RUN curl -sS https://getcomposer.org/installer | \
     php -- \
         --install-dir=/usr/local/bin \
         --filename=composer \
-        --version=2.9.8
+        --version=2.10.3
 
 # ----------------------------------------------------------------------------------------------------------------------
 # REDIS-TOOLS
