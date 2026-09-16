@@ -9,7 +9,7 @@ MESSENGER_STOP_FILE="/tmp/stop_${SUPERVISOR_PROGRAM_NAME}"
 MESSENGER_NAME=""
 TIME_LIMIT=3600
 LIMIT=1000
-VERBOSITY=""
+MESSENGER_OPTIONS=()
 
 cd "${PROJECT_ROOT:-/var/www/html}" || exit 1
 
@@ -40,46 +40,38 @@ while [ "$#" -gt 0 ]; do
     --name)
         MESSENGER_NAME=$2
         shift 2
-        continue
         ;;
     --name=*)
         MESSENGER_NAME=${1#*=}
         shift 1
-        continue
         ;;
     --limit)
         LIMIT=$2
         shift 2
-        continue
         ;;
     --limit=*)
         LIMIT=${1#*=}
         shift 1
-        continue
         ;;
     --time-limit)
         TIME_LIMIT=$2
         shift 2
-        continue
         ;;
     --time-limit=*)
         TIME_LIMIT=${1#*=}
         shift 1
-        continue
         ;;
     -v*)
-        VERBOSITY=$1
+        MESSENGER_OPTIONS+=("$1")
         shift 1
-        continue
         ;;
     -h | --help)
         help
         exit
         ;;
     *)
-        echo "[WARN] Unknown command line switch: $1" >&2
-        help
-        exit 1
+        MESSENGER_OPTIONS+=("$1")
+        shift 1
         ;;
     esac
 done
@@ -94,9 +86,8 @@ if [[ "${APP_READ_ONLY_MODE:-0}" -eq 1 || (-n "${SUPERVISOR_PROGRAM_NAME}" && -f
     echo "[INFO] Requested ${MESSENGER_NAME} worker stop, removing stop file and exiting with value 37"
     rm -f "${MESSENGER_STOP_FILE}"
     exit 37
-else
-    echo "[INFO] Starting ${MESSENGER_NAME} worker"
-    # shellcheck disable=SC2086
-    bin/console messenger:consume "${MESSENGER_NAME}" --limit "${LIMIT}" --time-limit "${TIME_LIMIT}" ${VERBOSITY} &
-    wait
 fi
+
+echo "[INFO] Starting ${MESSENGER_NAME} worker"
+bin/console messenger:consume "${MESSENGER_NAME}" --limit "${LIMIT}" --time-limit "${TIME_LIMIT}" "${MESSENGER_OPTIONS[@]}" &
+wait

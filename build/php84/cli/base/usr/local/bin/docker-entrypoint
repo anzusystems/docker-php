@@ -1,3 +1,9 @@
 #!/bin/bash
 
+if [ "$EUID" -eq 0 ]; then
+    echo "[INFO] Setup system wide environment variables for docker application"
+    (su -c "set -o posix; export -p" user) |
+    sed -E "/export (${DOCKER_APP_EXCLUDED_ENV_VARS-HOME|TERM})=/d" >/etc/environment.app
+fi
+
 exec "$@"

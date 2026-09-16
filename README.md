@@ -35,8 +35,15 @@ See versions in [version.conf](https://github.com/anzusystems/docker-php/blob/ma
 
 - `cron-cmd` - Cron script wrapper to run command with multiple options
 - `create-user` - Script to create user with provided UID and GID and fix permissions for folders
+- `docker-entrypoint` - Image entrypoint, exports the container environment into `/etc/environment.app` and renders the nginx templates in the nginx variant
 - `generate-messenger-supervisor-conf` - Script to generate messenger supervisor conf files inside the container
 - `start-messenger` - Script used to start messenger inside the container
+
+## Configuration
+
+`php.ini`, `php-fpm.conf`, `www.conf` and the nginx templates are rendered from the `PHP_*` and `NGINX_*` environment variables declared in `template.Dockerfile` and `variant-nginx.Dockerfile`. Override them in your `docker-compose.yml` (or `docker run -e`) instead of shipping your own config files.
+
+See [doc/configuration.md](https://github.com/anzusystems/docker-php/blob/main/doc/configuration.md) for the full list of variables, the directive each one sets and its default.
 
 ## Git Hooks
 
